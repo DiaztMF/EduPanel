@@ -104,17 +104,6 @@ export default function DashboardPage() {
       >
         {/* Logo + Branding */}
         <div className="flex items-center gap-4">
-          <div
-            className="flex items-center justify-center rounded-2xl shadow-md border-2 border-white"
-            style={{
-              width: "clamp(44px, 5.5vw, 68px)",
-              height: "clamp(44px, 5.5vw, 68px)",
-              background: "linear-gradient(135deg, #38bdf8 0%, #3b82f6 100%)",
-              fontSize: "clamp(22px, 2.8vw, 36px)",
-            }}
-          >
-            🎮
-          </div>
           <div>
             <h1
               className="font-black leading-none tracking-tight text-[#0ea5e9]"
@@ -186,18 +175,6 @@ export default function DashboardPage() {
         </div>
       </main>
 
-      {/* ─── Footer ─── */}
-      <motion.footer
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.8 }}
-        className="relative z-10 flex items-center justify-center"
-        style={{ padding: "clamp(8px, 1vh, 16px)" }}
-      >
-        <p className="text-gray-400 font-bold" style={{ fontSize: "var(--text-xs)" }}>
-          Tap a game to begin · EduPanel Hub v1.0 · Built for Interactive Flat Panels
-        </p>
-      </motion.footer>
     </div>
   );
 }

@@ -2,24 +2,24 @@
 
 /* ─── CSS Custom Properties ─── */
 :root {
-  /* Color Palette */
-  --color-bg: #08090e;
-  --color-bg-card: rgba(255, 255, 255, 0.04);
-  --color-bg-card-hover: rgba(255, 255, 255, 0.07);
-  --color-border: rgba(255, 255, 255, 0.08);
-  --color-border-hover: rgba(255, 255, 255, 0.16);
+  /* Color Palette — Light Theme (design.md) */
+  --color-bg: #e0f2fe;
+  --color-bg-card: #ffffff;
+  --color-bg-card-hover: #f8fafc;
+  --color-border: #e2e8f0;
+  --color-border-hover: #cbd5e1;
 
-  /* Player Colors */
-  --color-p1: #6c8eff;
-  --color-p1-dim: rgba(108, 142, 255, 0.15);
-  --color-p1-glow: rgba(108, 142, 255, 0.4);
-  --color-p2: #ff6b6b;
-  --color-p2-dim: rgba(255, 107, 107, 0.15);
-  --color-p2-glow: rgba(255, 107, 107, 0.4);
+  /* Player Colors — design.md §2 */
+  --color-p1: #1e3a8a;
+  --color-p1-dim: rgba(30, 58, 138, 0.12);
+  --color-p1-glow: rgba(30, 58, 138, 0.25);
+  --color-p2: #7f1d1d;
+  --color-p2-dim: rgba(127, 29, 29, 0.12);
+  --color-p2-glow: rgba(127, 29, 29, 0.25);
 
   /* Accent Colors */
-  --color-accent-blue: #6c8eff;
-  --color-accent-red: #ff6b6b;
+  --color-accent-blue: #3b82f6;
+  --color-accent-red: #ef4444;
   --color-accent-purple: #a78bff;
   --color-accent-mint: #4adeab;
   --color-accent-orange: #ffaa5e;
@@ -53,13 +53,10 @@
 html {
   font-family: "Outfit", "Space Grotesk", system-ui, sans-serif;
   background-color: var(--color-bg);
-  color: white;
-  /* Prevent text selection during gameplay */
+  color: #1f2937;
   -webkit-user-select: none;
   user-select: none;
-  /* Remove long-press context menu on touch devices */
   -webkit-touch-callout: none;
-  /* Optimized touch */
   touch-action: manipulation;
   height: 100%;
   overflow: hidden;
@@ -85,12 +82,10 @@ body {
   overflow: hidden;
 }
 
-/* ─── Glassmorphism Card ─── */
+/* ─── Card ─── */
 .glass-card {
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   border-radius: 16px;
   transition:
     border-color 0.2s ease,
@@ -115,8 +110,6 @@ body {
 
 /* ─── Touch Button Base ─── */
 .touch-btn {
-  min-height: var(--touch-lg);
-  min-width: var(--touch-lg);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -125,26 +118,13 @@ body {
   outline: none;
   border-radius: 12px;
   font-family: inherit;
-  font-weight: 600;
-  font-size: var(--text-base);
-  transition: transform 0.1s ease;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s ease;
 }
 
 .touch-btn:active {
   transform: scale(0.95);
-}
-
-/* ─── Player Zone Base ─── */
-.player-zone-p1 {
-  background: linear-gradient(135deg, rgba(108, 142, 255, 0.05) 0%, transparent 60%);
-  border-right: 1px solid rgba(108, 142, 255, 0.2);
-}
-
-.player-zone-p2 {
-  background: linear-gradient(225deg, rgba(255, 107, 107, 0.05) 0%, transparent 60%);
-  border-left: 1px solid rgba(255, 107, 107, 0.2);
 }
 
 /* ─── Noise Texture Overlay ─── */
@@ -159,9 +139,9 @@ body {
 
 /* ─── Animated Gradient Background ─── */
 .bg-animated-gradient {
-  background: radial-gradient(ellipse at 20% 50%, rgba(108, 142, 255, 0.08) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 20%, rgba(167, 139, 255, 0.06) 0%, transparent 50%),
-    radial-gradient(ellipse at 60% 80%, rgba(74, 222, 171, 0.04) 0%, transparent 50%),
+  background: radial-gradient(ellipse at 20% 50%, rgba(59, 130, 246, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(167, 139, 255, 0.04) 0%, transparent 50%),
+    radial-gradient(ellipse at 60% 80%, rgba(74, 222, 171, 0.03) 0%, transparent 50%),
     var(--color-bg);
 }
 
@@ -183,4 +163,4 @@ body {
 /* ─── Scrollbar Styling ─── */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 2px; }
+::-webkit-scrollbar-thumb { background: rgba(107, 114, 128, 0.25); border-radius: 2px; }

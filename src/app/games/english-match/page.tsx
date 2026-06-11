@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Link from "next/link";
-import { GlobalTimer } from "@/components/game/GlobalTimer";
+import { GameHeader } from "@/components/game/GameHeader";
 import { VictoryResultModal } from "@/components/game/VictoryResultModal";
 import { type VocabPair, getRoundPairs } from "@/data/vocab-pairs";
 
@@ -47,13 +46,12 @@ function MatchPanel({ player, state, onSelectEnglish, onSelectIndonesian, disabl
 
   return (
     <div className="flex flex-col bg-white rounded-2xl shadow-lg border-2 overflow-hidden w-full h-full" style={{ borderColor: borderColor }}>
-      <div className="flex items-center justify-between text-white py-3 px-6 shadow-inner relative" style={{ backgroundColor: headerColor }}>
-        <h2 className="font-bold tracking-widest text-center" style={{ fontSize: "clamp(16px, 1.5vw, 24px)" }}>{teamName}</h2>
-        <div className="font-black bg-white/20 px-3 py-1 rounded-lg" style={{ fontSize: "clamp(14px, 1.5vw, 20px)" }}>{state.score} pts</div>
+      <div className="flex items-center justify-between text-white px-6 shadow-inner flex-shrink-0" style={{ backgroundColor: headerColor, paddingBlock: "clamp(8px, 1.2vh, 16px)" }}>
+        <h2 className="font-bold tracking-widest" style={{ fontSize: "clamp(14px, 1.4vw, 22px)" }}>{teamName}</h2>
+        <div className="font-black bg-white/20 px-3 py-1 rounded-lg" style={{ fontSize: "clamp(13px, 1.3vw, 18px)" }}>{state.score} pts</div>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-start p-4 bg-[#f8fafc]">
-        {/* All matched celebration */}
+      <div className="flex-1 flex flex-col min-h-0" style={{ padding: "clamp(8px, 1.2vh, 14px)", background: "#f8fafc" }}>
         {allMatched ? (
           <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="flex-1 flex flex-col items-center justify-center gap-3">
             <span style={{ fontSize: "clamp(48px,8vw,96px)" }}>🎉</span>
@@ -61,10 +59,10 @@ function MatchPanel({ player, state, onSelectEnglish, onSelectIndonesian, disabl
             <p className="text-gray-400 font-bold" style={{ fontSize: "clamp(10px,1.2vw,16px)" }}>Ronde baru segera dimulai...</p>
           </motion.div>
         ) : (
-          <div className="w-full flex-1 grid grid-cols-2 gap-4 min-h-0" style={{ alignContent: "start" }}>
+          <div className="w-full flex-1 grid grid-cols-2 min-h-0" style={{ gap: "clamp(6px, 1vw, 12px)" }}>
             {/* Left: English words */}
-            <div className="flex flex-col gap-3">
-              <p className="text-center font-bold text-gray-400 uppercase tracking-widest" style={{ fontSize: "clamp(10px,1.2vw,14px)" }}>🇬🇧 English</p>
+            <div className="flex flex-col min-h-0" style={{ gap: "clamp(4px, 0.8vh, 8px)" }}>
+              <p className="text-center font-bold text-gray-400 uppercase tracking-widest flex-shrink-0" style={{ fontSize: "clamp(9px,1vw,13px)" }}>🇬🇧 English</p>
               {pairs.map((pair) => {
                 const isMatched = matched.has(pair.id);
                 const isSelected = selected === pair.id;
@@ -75,18 +73,15 @@ function MatchPanel({ player, state, onSelectEnglish, onSelectIndonesian, disabl
                   <motion.button
                     key={pair.id}
                     onPointerDown={(e) => { e.stopPropagation(); if (!disabled && !isMatched) onSelectEnglish(pair.id); }}
-                    animate={{
-                      scale: isWrong ? [1, 0.92, 1] : isCorrect ? [1, 1.06, 1] : 1,
-                      background: isMatched ? "#d1fae5" : isSelected ? borderColor : "#f3f4f6",
-                    }}
+                    animate={{ scale: isWrong ? [1, 0.92, 1] : isCorrect ? [1, 1.06, 1] : 1, background: isMatched ? "#d1fae5" : isSelected ? borderColor : "#f3f4f6" }}
                     transition={{ duration: 0.25 }}
-                    className="touch-btn font-bold text-left flex items-center gap-2 shadow-sm rounded-xl border-2"
+                    className="touch-btn flex-1 font-bold text-left flex items-center gap-2 shadow-sm rounded-xl border-2"
                     style={{
-                      minHeight: "clamp(48px, 8vh, 80px)",
+                      minHeight: "clamp(40px, 6vh, 70px)",
                       borderColor: isMatched ? "#10b981" : isSelected ? headerColor : isWrong ? "#ef4444" : "#e5e7eb",
                       color: isMatched ? "#059669" : isSelected ? "white" : "#374151",
-                      fontSize: "clamp(12px,1.6vw,24px)",
-                      padding: "clamp(6px,0.9vh,12px) clamp(8px,1vw,14px)",
+                      fontSize: "clamp(11px,1.4vw,20px)",
+                      padding: "clamp(4px,0.7vh,10px) clamp(6px,0.8vw,12px)",
                       opacity: isMatched ? 0.5 : disabled ? 0.5 : 1,
                       touchAction: "manipulation",
                       textDecoration: isMatched ? "line-through" : "none",
@@ -100,9 +95,9 @@ function MatchPanel({ player, state, onSelectEnglish, onSelectIndonesian, disabl
               })}
             </div>
 
-            {/* Right: Indonesian translations (shuffled) */}
-            <div className="flex flex-col gap-3">
-              <p className="text-center font-bold text-gray-400 uppercase tracking-widest" style={{ fontSize: "clamp(10px,1.2vw,14px)" }}>🇮🇩 Indonesia</p>
+            {/* Right: Indonesian translations */}
+            <div className="flex flex-col min-h-0" style={{ gap: "clamp(4px, 0.8vh, 8px)" }}>
+              <p className="text-center font-bold text-gray-400 uppercase tracking-widest flex-shrink-0" style={{ fontSize: "clamp(9px,1vw,13px)" }}>🇮🇩 Indonesia</p>
               {shuffledIds.map((pid) => {
                 const pair = pairs.find((p) => p.id === pid)!;
                 const isMatched = matched.has(pair.id);
@@ -112,18 +107,15 @@ function MatchPanel({ player, state, onSelectEnglish, onSelectIndonesian, disabl
                   <motion.button
                     key={pair.id + "-id"}
                     onPointerDown={(e) => { e.stopPropagation(); if (!disabled && !isMatched && selected) onSelectIndonesian(pair.id); }}
-                    animate={{
-                      scale: isWrong ? [1, 0.92, 1] : 1,
-                      background: isMatched ? "#d1fae5" : "#ffffff",
-                    }}
+                    animate={{ scale: isWrong ? [1, 0.92, 1] : 1, background: isMatched ? "#d1fae5" : "#ffffff" }}
                     transition={{ duration: 0.25 }}
-                    className="touch-btn font-bold text-center shadow-sm rounded-xl border-2"
+                    className="touch-btn flex-1 font-bold text-center shadow-sm rounded-xl border-2"
                     style={{
-                      minHeight: "clamp(48px, 8vh, 80px)",
+                      minHeight: "clamp(40px, 6vh, 70px)",
                       borderColor: isMatched ? "#10b981" : isWrong ? "#ef4444" : "#e5e7eb",
                       color: isMatched ? "#059669" : "#374151",
-                      fontSize: "clamp(12px,1.6vw,24px)",
-                      padding: "clamp(6px,0.9vh,12px) clamp(8px,1vw,14px)",
+                      fontSize: "clamp(11px,1.4vw,20px)",
+                      padding: "clamp(4px,0.7vh,10px) clamp(6px,0.8vw,12px)",
                       opacity: isMatched ? 0.5 : disabled ? 0.5 : 1,
                       touchAction: "manipulation",
                       textDecoration: isMatched ? "line-through" : "none",
@@ -136,10 +128,6 @@ function MatchPanel({ player, state, onSelectEnglish, onSelectIndonesian, disabl
             </div>
           </div>
         )}
-
-        <p className="text-center text-gray-400 font-bold mt-4" style={{ fontSize: "clamp(10px,1vw,14px)" }}>
-          Pilih kata Inggris → lalu pasangkan ke terjemahannya
-        </p>
       </div>
     </div>
   );
@@ -236,48 +224,25 @@ export default function EnglishMatchPage() {
   const p1Handlers = makeHandlers(setP1);
   const p2Handlers = makeHandlers(setP2);
 
-  const isFullscreen = () => {
-    if (typeof window !== "undefined" && document.fullscreenElement) {
-      document.exitFullscreen();
-    } else if (typeof window !== "undefined") {
-      document.documentElement.requestFullscreen().catch(() => {});
-    }
-  };
-
   // Progress logic based on a max score, e.g., 200
   const maxScore = 200;
   const p1Pct = Math.min(Math.max(p1.score, 0) / maxScore, 1) * 100;
   const p2Pct = Math.min(Math.max(p2.score, 0) / maxScore, 1) * 100;
 
   return (
-    <div className="w-full h-full flex flex-col items-center bg-[#e0f2fe] relative overflow-hidden text-gray-900 font-sans">
-      
+    <div className="w-full h-full flex flex-col bg-[#e0f2fe] relative overflow-hidden text-gray-900 font-sans">
 
+      {/* ── SHARED GAME HEADER ── */}
+      <GameHeader
+        title="English Match"
+        subtitle="Cocokkan Kosakata"
+        timerDuration={GAME_DURATION}
+        isTimerRunning={phase === "playing"}
+        onTimerComplete={finishGame}
+      />
 
-      {/* TOP HEADER */}
-      <div className="w-full flex items-center justify-between px-6 py-4 shadow-sm bg-[#e0f2fe] z-10 flex-shrink-0">
-        <div className="w-32 flex justify-start"></div>
-        <div className="flex-1 flex justify-center items-center">
-          <div className="font-bold text-[#0ea5e9] tracking-wide" style={{ fontSize: "clamp(20px, 2vw, 32px)" }}>
-             English Match
-          </div>
-        </div>
-        <div className="w-32 flex justify-end">
-           <button onPointerDown={isFullscreen} className="bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 font-bold px-4 py-2 rounded-lg shadow-sm transition-colors">
-             🖥️
-           </button>
-        </div>
-      </div>
-
-      {/* TIMER */}
-      <div className="w-full flex justify-center z-20 mt-4 mb-2">
-        <GlobalTimer duration={GAME_DURATION} isRunning={phase === "playing"} onComplete={finishGame} />
-      </div>
-
-
-
-      {/* TEAM PANELS / MATCH PANELS */}
-      <div className="flex-1 w-full max-w-7xl px-8 pb-8 z-10 flex gap-8 min-h-0">
+      {/* ── TEAM PANELS ── */}
+      <div className="flex-1 w-full z-10 flex gap-8 min-h-0" style={{ padding: "clamp(8px, 1.2vh, 14px) clamp(20px, 4vw, 60px) clamp(8px, 1.2vh, 14px)" }}>
         <div className="flex-1 min-w-0">
           <MatchPanel player={2} state={p2} onSelectEnglish={p2Handlers.onSelectEnglish} onSelectIndonesian={p2Handlers.onSelectIndonesian} disabled={phase !== "playing"} />
         </div>
@@ -286,7 +251,7 @@ export default function EnglishMatchPage() {
         </div>
       </div>
 
-      {/* COUNTDOWN OVERLAY */}
+      {/* ── COUNTDOWN OVERLAY ── */}
       <AnimatePresence>
         {phase === "countdown" && (
           <motion.div
@@ -309,15 +274,6 @@ export default function EnglishMatchPage() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* BOTTOM MENU BUTTON */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-30">
-        <Link href="/" className="bg-white hover:bg-gray-50 border-2 border-[#bae6fd] text-gray-700 font-bold px-8 py-3 rounded-full shadow-lg transition-all flex items-center gap-2" style={{ textDecoration: "none", fontSize: "clamp(14px, 1.5vw, 20px)" }}>
-          ← Menu Utama
-        </Link>
-      </div>
-
-
 
       <VictoryResultModal isOpen={phase === "finished"} winner={winner} p1Score={p1.score} p2Score={p2.score} p1Label="Tim Biru" p2Label="Tim Merah" onRematch={handleRematch} />
     </div>

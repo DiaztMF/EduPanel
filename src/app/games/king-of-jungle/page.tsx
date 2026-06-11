@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { BOARD, getRandomQuestion, type BoardQuestion } from "@/data/board-game";
 import { VictoryResultModal } from "@/components/game/VictoryResultModal";
+import { GameHeader } from "@/components/game/GameHeader";
 
 type GamePhase = "intro" | "rolling" | "moving" | "quiz" | "effect" | "finished";
 
@@ -203,29 +204,16 @@ export default function KingOfJunglePage() {
     <div className="w-full h-full flex flex-col items-center bg-[#e0f2fe] relative overflow-hidden text-gray-900 font-sans">
       
       {/* TOP HEADER */}
-      <div className="w-full flex items-center justify-between px-6 py-4 shadow-sm bg-[#e0f2fe] z-10">
-        <div className="w-32 flex justify-start">
-        </div>
-        <div className="flex-1 flex justify-center items-center gap-4">
-          <div className="font-bold text-[#0ea5e9] tracking-wide" style={{ fontSize: "clamp(20px, 2vw, 32px)" }}>
-             King of the Jungle
-          </div>
-        </div>
-        <div className="w-32 flex justify-end">
-           <button onPointerDown={isFullscreen} className="bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 font-bold px-4 py-2 rounded-lg shadow-sm transition-colors">
-             🖥️
-           </button>
-        </div>
-      </div>
+      <GameHeader
+        title="King of the Jungle"
+        subtitle="Board game hutan 30 petak"
+      />
 
       {/* SCOREBOARD (PROGRESS BARS IN A BEIGE BOARD) */}
       <div className="w-full max-w-6xl px-8 py-4 z-10 flex flex-col items-center">
          <div className="w-full bg-[#ffedd5] border border-[#fdba74] shadow-sm rounded-2xl p-4 flex flex-col gap-3 relative">
            
-           {/* Turn Indicator */}
-           <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-white px-4 py-1 rounded-full border border-[#fdba74] shadow-sm font-bold text-gray-700 text-sm">
-             {turn === 1 ? "🔵 Giliran TIM BIRU" : "🔴 Giliran TIM MERAH"}
-           </div>
+           {/* Removed Turn Indicator from here */}
 
            {/* Tim Merah (P2) */}
            <div className="flex items-center gap-4 w-full mt-2">
@@ -312,6 +300,13 @@ export default function KingOfJunglePage() {
                 <span style={{ color: l.color }}>{l.label}</span>
               </div>
             ))}
+            
+            {/* Turn Indicator Moved Here */}
+            <div className="mt-4 pt-4 border-t border-gray-200 w-full flex justify-center">
+              <div className="bg-white px-4 py-2 rounded-full border border-[#fdba74] shadow-sm font-bold text-gray-700 text-center" style={{ fontSize: "clamp(12px, 1.2vw, 14px)" }}>
+                {turn === 1 ? "🔵 Giliran TIM BIRU" : "🔴 Giliran TIM MERAH"}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -387,12 +382,7 @@ export default function KingOfJunglePage() {
         )}
       </AnimatePresence>
 
-      {/* BOTTOM MENU BUTTON */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-30">
-        <Link href="/" className="bg-white hover:bg-gray-50 border-2 border-[#bae6fd] text-gray-700 font-bold px-8 py-3 rounded-full shadow-lg transition-all flex items-center gap-2" style={{ textDecoration: "none", fontSize: "clamp(14px, 1.5vw, 20px)" }}>
-          ← Menu Utama
-        </Link>
-      </div>
+
 
       <VictoryResultModal isOpen={phase === "finished"} winner={winner} p1Score={p1Score} p2Score={p2Score} p1Label="Tim Biru" p2Label="Tim Merah" onRematch={handleReset} />
     </div>

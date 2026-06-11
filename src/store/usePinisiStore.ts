@@ -56,7 +56,7 @@ export const usePinisiStore = create<PinisiState>()(
       },
 
       nextWord: () =>
-        set({ currentWord: getNextWord(), p1Guessed: new Set(), p2Guessed: new Set(), p1Errors: 0, p2Errors: 0 }),
+        set({ currentWord: getNextWord(), p1Guessed: new Set(), p2Guessed: new Set() }),
 
       reset: () => {
         resetWordPool();

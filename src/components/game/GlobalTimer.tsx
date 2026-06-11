@@ -19,51 +19,68 @@ export function GlobalTimer({
   criticalThreshold = 10,
 }: GlobalTimerProps) {
   const [remaining, setRemaining] = useState(duration);
+
+  // Stable callback refs — never cause the interval to restart
   const onCompleteRef = useRef(onComplete);
   const onCriticalRef = useRef(onCritical);
-  const calledComplete = useRef(false);
-  const calledCritical = useRef(false);
-
   useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
   useEffect(() => { onCriticalRef.current = onCritical; }, [onCritical]);
 
-  useEffect(() => {
-    setRemaining(duration);
-    calledComplete.current = false;
-    calledCritical.current = false;
-  }, [duration]);
+  // Refs for the countdown value and one-shot flags
+  const remainingRef    = useRef(duration);
+  const calledComplete  = useRef(false);
+  const calledCritical  = useRef(false);
 
   useEffect(() => {
-    if (!isRunning) return;
-    const id = setInterval(() => {
-      setRemaining((prev) => {
-        const next = prev - 1;
-        if (next <= criticalThreshold && !calledCritical.current) {
-          calledCritical.current = true;
-          onCriticalRef.current?.();
-        }
-        if (next <= 0 && !calledComplete.current) {
-          calledComplete.current = true;
-          onCompleteRef.current?.();
-          clearInterval(id);
-          return 0;
-        }
-        return next;
-      });
-    }, 1000);
-    return () => clearInterval(id);
-  }, [isRunning, criticalThreshold]);
+    let id: ReturnType<typeof setInterval>;
+    
+    // Defer reset logic to avoid React's "sync setState inside effect" warning
+    const t = setTimeout(() => {
+      // Sync remaining with duration when not running or when starting fresh
+      remainingRef.current = duration;
+      setRemaining(duration);
+      calledComplete.current = false;
+      calledCritical.current = false;
 
-  const pct = (remaining / duration) * 100;
+      if (isRunning) {
+        id = setInterval(() => {
+          const next = Math.max(0, remainingRef.current - 1);
+          remainingRef.current = next;
+          setRemaining(next);
+
+          // Callbacks called OUTSIDE setState updater
+          if (next <= criticalThreshold && !calledCritical.current) {
+            calledCritical.current = true;
+            onCriticalRef.current?.();
+          }
+          if (next <= 0 && !calledComplete.current) {
+            calledComplete.current = true;
+            clearInterval(id);
+            onCompleteRef.current?.();
+          }
+        }, 1000);
+      }
+    }, 0);
+
+    return () => {
+      clearTimeout(t);
+      if (id) clearInterval(id);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isRunning, duration, criticalThreshold]);
+
+  const pct        = duration > 0 ? (remaining / duration) * 100 : 0;
   const isCritical = remaining <= criticalThreshold;
-  const color = isCritical ? "#ff6b6b" : remaining <= duration * 0.4 ? "#ffaa5e" : "#4adeab";
+  const color      = isCritical ? "#dc2626" : remaining <= duration * 0.4 ? "#d97706" : "#0284c7";
+  const trackColor = "rgba(15, 23, 42, 0.12)";
 
   return (
     <div className="flex flex-col items-center gap-1">
-      {/* Circular timer */}
       <div className="relative" style={{ width: "clamp(56px, 7vw, 88px)", height: "clamp(56px, 7vw, 88px)" }}>
         <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 40 40">
-          <circle cx="20" cy="20" r="17" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3" />
+          {/* Track ring */}
+          <circle cx="20" cy="20" r="17" fill="none" stroke={trackColor} strokeWidth="3" />
+          {/* Progress ring */}
           <circle
             cx="20" cy="20" r="17"
             fill="none"
@@ -86,14 +103,18 @@ export function GlobalTimer({
             style={{
               fontSize: "clamp(16px, 2.2vw, 30px)",
               color,
-              textShadow: isCritical ? `0 0 12px ${color}` : "none",
+              textShadow: isCritical ? `0 0 8px ${color}55` : "none",
             }}
           >
             {remaining}
           </motion.span>
         </AnimatePresence>
       </div>
-      <span className="text-white/40 font-medium tracking-widest uppercase" style={{ fontSize: "clamp(8px, 0.9vw, 11px)" }}>
+
+      <span
+        className="font-bold tracking-widest uppercase"
+        style={{ fontSize: "clamp(8px, 0.9vw, 11px)", color: "rgba(15,23,42,0.45)" }}
+      >
         TIME
       </span>
     </div>

@@ -2,10 +2,9 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Link from "next/link";
 import { useQuizTugStore } from "@/store/useQuizTugStore";
 import { VictoryResultModal } from "@/components/game/VictoryResultModal";
-import { GlobalTimer } from "@/components/game/GlobalTimer";
+import { GameHeader } from "@/components/game/GameHeader";
 
 const GAME_DURATION = 60; // seconds
 
@@ -226,57 +225,36 @@ export default function QuizTugOfWarPage() {
 
   const isPlaying = phase === "playing";
 
-  const isFullscreen = () => {
-    if (typeof window !== "undefined" && document.fullscreenElement) {
-      document.exitFullscreen();
-    } else if (typeof window !== "undefined") {
-      document.documentElement.requestFullscreen().catch(() => { });
-    }
-  };
-
   return (
-    <div className="w-full h-full flex flex-col items-center bg-[#e0f2fe] relative overflow-hidden text-gray-900 font-sans">
+    <div className="w-full h-full flex flex-col bg-[#e0f2fe] relative overflow-hidden text-gray-900 font-sans">
 
+      {/* ── SHARED GAME HEADER ── */}
+      <GameHeader
+        title="Tarik Tambang Kuis"
+        subtitle="Quiz Tug-of-War"
+        timerDuration={GAME_DURATION}
+        isTimerRunning={phase === "playing"}
+        onTimerComplete={() => finishGame()}
+      />
 
-
-      {/* TOP HEADER */}
-      <div className="w-full flex items-center justify-between px-6 py-4 shadow-sm bg-[#e0f2fe] z-10 flex-shrink-0">
-        <div className="w-32 flex justify-start"></div>
-        <div className="flex-1 flex justify-center items-center">
-          <div className="font-bold text-[#0ea5e9] tracking-wide" style={{ fontSize: "clamp(20px, 2vw, 32px)" }}>
-            Tarik Tambang Pengetahuan
-          </div>
-        </div>
-        <div className="w-32 flex justify-end">
-          <button onPointerDown={isFullscreen} className="bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 font-bold px-4 py-2 rounded-lg shadow-sm transition-colors">
-            🖥️
-          </button>
-        </div>
-      </div>
-
-      {/* TIMER */}
-      <div className="w-full flex justify-center z-20 mt-5 mb-2">
-        <GlobalTimer duration={GAME_DURATION} isRunning={phase === "playing"} onComplete={() => finishGame()} />
-      </div>
-
-      {/* Center Question Panel */}
-      <div className="w-full flex justify-center px-8 z-10 mt-20" style={{ marginBottom: "clamp(20px, 3vh, 40px)" }}>
+      {/* ── QUESTION PANEL (center, compact) ── */}
+      <div className="w-full flex justify-center px-6 z-10" style={{ paddingTop: "clamp(10px, 1.5vh, 20px)", paddingBottom: "clamp(6px, 1vh, 12px)" }}>
         <AnimatePresence mode="wait">
           <motion.div
             key={currentQuestion.id}
-            initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} transition={{ duration: 0.2 }}
-            className="bg-white rounded-2xl shadow-lg border-4 border-gray-100 text-center flex items-center justify-center"
-            style={{ padding: "clamp(16px, 2.5vh, 40px) clamp(30px, 4vw, 80px)", maxWidth: "clamp(600px, 60vw, 1200px)", minHeight: "clamp(80px, 10vh, 160px)" }}
+            initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 16 }} transition={{ duration: 0.2 }}
+            className="bg-white rounded-2xl shadow-md border-2 border-sky-100 text-center flex items-center justify-center"
+            style={{ padding: "clamp(12px, 1.8vh, 28px) clamp(24px, 3vw, 60px)", maxWidth: "clamp(500px, 55vw, 1100px)", minHeight: "clamp(60px, 8vh, 120px)", width: "100%" }}
           >
-            <h2 className="font-black text-[#1e1b4b] leading-tight" style={{ fontSize: "clamp(24px, 2.5vw, 48px)" }}>
+            <h2 className="font-black text-[#1e1b4b] leading-tight" style={{ fontSize: "clamp(18px, 2vw, 36px)" }}>
               {currentQuestion.question}
             </h2>
           </motion.div>
         </AnimatePresence>
       </div>
 
-      {/* Main Content Area */}
-      <div className="flex-1 w-full flex items-center justify-between z-10" style={{ padding: "0 clamp(32px, 6vw, 120px) clamp(40px, 5vh, 80px)" }}>
+      {/* ── MAIN CONTENT AREA ── */}
+      <div className="flex-1 w-full flex items-center justify-between min-h-0" style={{ padding: "0 clamp(24px, 4vw, 80px) clamp(12px, 2vh, 28px)" }}>
 
         {/* Left P1 Panel */}
         <div className="flex flex-col items-start z-10 flex-shrink-0">
@@ -290,9 +268,9 @@ export default function QuizTugOfWarPage() {
         </div>
 
         {/* Center Graphic */}
-        <div className="flex flex-col items-center justify-center flex-1 mx-8 z-0">
+        <div className="flex flex-col items-center justify-center flex-1 mx-6 z-0 min-w-0">
           <RopeScene position={ropePosition} />
-          <p className="font-bold text-[#1f2937] text-center" style={{ marginTop: "clamp(30px, 5vh, 60px)", fontSize: "clamp(24px, 2.5vw, 40px)" }}>Pilih jawaban untuk menarik tali!</p>
+          <p className="font-bold text-[#1f2937] text-center mt-3" style={{ fontSize: "clamp(14px, 1.5vw, 22px)" }}>Pilih jawaban untuk menarik tali!</p>
         </div>
 
         {/* Right P2 Panel */}
@@ -308,7 +286,7 @@ export default function QuizTugOfWarPage() {
 
       </div>
 
-      {/* COUNTDOWN OVERLAY */}
+      {/* ── COUNTDOWN OVERLAY ── */}
       <AnimatePresence>
         {phase === "countdown" && (
           <motion.div
@@ -332,14 +310,7 @@ export default function QuizTugOfWarPage() {
         )}
       </AnimatePresence>
 
-      {/* BOTTOM MENU BUTTON */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-30">
-        <Link href="/" className="bg-white hover:bg-gray-50 border-2 border-[#bae6fd] text-gray-700 font-bold px-8 py-3 rounded-full shadow-lg transition-all flex items-center gap-2" style={{ textDecoration: "none", fontSize: "clamp(14px, 1.5vw, 20px)" }}>
-          ← Menu Utama
-        </Link>
-      </div>
-
-      {/* VICTORY MODAL */}
+      {/* ── VICTORY MODAL ── */}
       <VictoryResultModal
         isOpen={phase === "finished"}
         winner={winner}

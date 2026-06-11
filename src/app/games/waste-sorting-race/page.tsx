@@ -1,14 +1,13 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Link from "next/link";
-import { GlobalTimer } from "@/components/game/GlobalTimer";
+import { GameHeader } from "@/components/game/GameHeader";
 import { VictoryResultModal } from "@/components/game/VictoryResultModal";
 import { useWasteStore } from "@/store/useWasteStore";
 import { WASTE_CONFIG, type WasteCategory } from "@/data/waste-items";
 
-const GAME_DURATION = 90; // seconds
+const GAME_DURATION = 60; // seconds
 
 type Phase = "countdown" | "playing" | "finished";
 
@@ -32,51 +31,39 @@ function TeamPanel({
 
   return (
     <div className="flex flex-col bg-white rounded-3xl shadow-lg border-4 overflow-hidden h-full" style={{ borderColor: color }}>
-      <div className="flex items-center justify-between text-white py-3 px-6 shadow-inner relative" style={{ backgroundColor: color }}>
-        <h2 className="font-bold tracking-widest" style={{ fontSize: "clamp(16px, 2vw, 24px)" }}>{title}</h2>
-        <div className="font-black bg-white/20 px-3 py-1 rounded-lg" style={{ fontSize: "clamp(14px, 1.5vw, 20px)" }}>{score} pts</div>
+      <div className="flex items-center justify-between text-white px-6 shadow-inner flex-shrink-0" style={{ backgroundColor: color, paddingBlock: "clamp(8px, 1.2vh, 16px)" }}>
+        <h2 className="font-bold tracking-widest" style={{ fontSize: "clamp(14px, 1.6vw, 22px)" }}>{title}</h2>
+        <div className="font-black bg-white/20 px-3 py-1 rounded-lg" style={{ fontSize: "clamp(13px, 1.3vw, 18px)" }}>{score} pts</div>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-[#f8fafc] gap-6 relative">
+      <div className="flex-1 flex flex-col min-h-0 relative" style={{ padding: "clamp(10px, 1.5vh, 18px)", background: "#f8fafc", gap: "clamp(8px, 1.2vh, 14px)" }}>
         <AnimatePresence>
           {lastResult && (
             <motion.div
               initial={{ opacity: 0, scale: 0.5, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.5, y: -20 }}
-              className="absolute font-black z-20"
-              style={{
-                top: "10%",
-                color: lastResult === "correct" ? "#10b981" : "#ef4444",
-                fontSize: "clamp(48px, 6vw, 80px)",
-                filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.1))"
-              }}
+              className="absolute font-black z-20 pointer-events-none"
+              style={{ top: "8%", left: "50%", transform: "translateX(-50%)", color: lastResult === "correct" ? "#10b981" : "#ef4444", fontSize: "clamp(40px, 5vw, 70px)", filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.1))" }}
             >
               {lastResult === "correct" ? "+10" : "-5"}
             </motion.div>
           )}
         </AnimatePresence>
 
-        <div className="flex flex-col gap-4 w-full max-w-sm">
+        <div className="flex flex-col flex-1 min-h-0 w-full" style={{ gap: "clamp(8px, 1.2vh, 14px)" }}>
           {options.map((cat, idx) => {
             const cfg = WASTE_CONFIG[cat];
             return (
               <button
                 key={`${cat}-${idx}`}
-                onPointerDown={(e) => {
-                  e.stopPropagation();
-                  onGuess(cat);
-                }}
+                onPointerDown={(e) => { e.stopPropagation(); onGuess(cat); }}
                 disabled={disabled}
-                className="touch-btn w-full bg-white border-2 rounded-2xl shadow-sm flex items-center justify-center gap-4 active:scale-95 transition-transform"
-                style={{
-                  borderColor: cfg.color,
-                  padding: "clamp(12px, 2vh, 24px)",
-                  opacity: disabled ? 0.6 : 1
-                }}
+                className="touch-btn flex-1 w-full bg-white border-2 rounded-2xl shadow-sm flex items-center justify-center gap-4 active:scale-95 transition-transform"
+                style={{ borderColor: cfg.color, minHeight: "clamp(48px, 6vh, 80px)", opacity: disabled ? 0.6 : 1 }}
               >
-                <span style={{ fontSize: "clamp(32px, 3vw, 48px)" }}>{cfg.emoji}</span>
-                <span className="font-bold" style={{ fontSize: "clamp(20px, 2vw, 32px)", color: cfg.color }}>{cfg.label}</span>
+                <span style={{ fontSize: "clamp(28px, 3vw, 44px)" }}>{cfg.emoji}</span>
+                <span className="font-bold" style={{ fontSize: "clamp(16px, 1.8vw, 28px)", color: cfg.color }}>{cfg.label}</span>
               </button>
             );
           })}
@@ -104,29 +91,37 @@ export default function WasteSortingRacePage() {
   const [countdown, setCountdown] = useState(3);
   const [winner, setWinner] = useState<"p1" | "p2" | "draw" | null>(null);
 
-  const cooldown = useRef(false);
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setIsMounted(true), 0);
+    return () => clearTimeout(t);
+  }, []);
+
+  const [locked, setLocked] = useState(false);
 
   useEffect(() => {
     if (phase !== "countdown") return;
     if (countdown <= 0) {
-      setPhase("playing");
-      reset();
-      return;
+      const t = setTimeout(() => {
+        setPhase("playing");
+        reset();
+      }, 0);
+      return () => clearTimeout(t);
     }
     const id = setTimeout(() => setCountdown((c) => c - 1), 1000);
     return () => clearTimeout(id);
   }, [phase, countdown, reset]);
 
   const handleGuess = (player: 1 | 2, cat: WasteCategory) => {
-    if (phase !== "playing" || cooldown.current) return;
-    const correct = submitAnswer(player, cat);
-    if (correct) {
-      cooldown.current = true;
-      setTimeout(() => {
-        nextWaste();
-        cooldown.current = false;
-      }, 600);
-    }
+    if (phase !== "playing" || locked) return;
+    setLocked(true);
+    submitAnswer(player, cat);
+    
+    // Auto advance immediately after someone answers
+    setTimeout(() => {
+      nextWaste();
+      setLocked(false);
+    }, 800);
   };
 
   const finishGame = () => {
@@ -144,55 +139,34 @@ export default function WasteSortingRacePage() {
     reset();
   };
 
-  const isFullscreen = () => {
-    if (typeof window !== "undefined" && document.fullscreenElement) {
-      document.exitFullscreen();
-    } else if (typeof window !== "undefined") {
-      document.documentElement.requestFullscreen().catch(() => { });
-    }
-  };
-
   // SCORE PCT
   const maxScore = Math.max(100, p1Score, p2Score);
-  const p1Pct = (p1Score / maxScore) * 100;
-  const p2Pct = (p2Score / maxScore) * 100;
+
+  if (!isMounted) return <div className="w-full h-full bg-[#e0f2fe]" />;
 
   return (
-    <div className="w-full h-full flex flex-col items-center bg-[#e0f2fe] relative overflow-hidden text-gray-900 font-sans">
-      
-      {/* TOP HEADER */}
-      <div className="w-full flex items-center justify-between px-6 py-4 shadow-sm bg-[#e0f2fe] z-10 flex-shrink-0">
-        <div className="w-32 flex justify-start"></div>
-        <div className="flex-1 flex justify-center items-center">
-          <div className="font-bold text-[#0ea5e9] tracking-wide" style={{ fontSize: "clamp(20px, 2vw, 32px)" }}>
-             Pilah Sampah
-          </div>
-        </div>
-        <div className="w-32 flex justify-end">
-           <button onPointerDown={isFullscreen} className="bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 font-bold px-4 py-2 rounded-lg shadow-sm transition-colors">
-             🖥️
-           </button>
-        </div>
-      </div>
+    <div className="w-full h-full flex flex-col bg-[#e0f2fe] relative overflow-hidden text-gray-900 font-sans">
 
-      {/* TIMER */}
-      <div className="w-full flex justify-center z-20 mt-4 mb-2">
-        <GlobalTimer duration={GAME_DURATION} isRunning={phase === "playing"} onComplete={finishGame} />
-      </div>
-
-
+      {/* ── SHARED GAME HEADER ── */}
+      <GameHeader
+        title="Balapan Pilah Sampah"
+        subtitle="Waste Sorting Race"
+        timerDuration={GAME_DURATION}
+        isTimerRunning={phase === "playing"}
+        onTimerComplete={finishGame}
+      />
 
       {/* CENTER CLUE CARD */}
-      <div className="w-full max-w-6xl px-8 z-10 mb-4 flex justify-center">
+      <div className="w-full z-10 flex-shrink-0" style={{ padding: "clamp(8px, 1.2vh, 14px) clamp(20px, 4vw, 60px)" }}>
          <AnimatePresence mode="wait">
            <motion.div 
              key={currentWaste.id}
              initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }}
-             className="bg-white rounded-2xl shadow-md border border-gray-200 text-center w-full flex flex-col items-center justify-center p-6 gap-2"
-             style={{ minHeight: "clamp(100px, 15vh, 180px)" }}
+             className="bg-white rounded-2xl shadow-md border border-gray-200 text-center w-full flex flex-col items-center justify-center gap-2"
+             style={{ minHeight: "clamp(90px, 13vh, 170px)", padding: "clamp(10px, 1.5vh, 20px)" }}
            >
-             <span style={{ fontSize: "clamp(48px, 5vw, 80px)" }}>{currentWaste.emoji}</span>
-             <h2 className="font-black text-[#1f2937] leading-tight" style={{ fontSize: "clamp(24px, 2.5vw, 40px)" }}>
+             <span style={{ fontSize: "clamp(40px, 5vw, 72px)" }}>{currentWaste.emoji}</span>
+             <h2 className="font-black text-[#1f2937] leading-tight" style={{ fontSize: "clamp(20px, 2.2vw, 36px)" }}>
                {currentWaste.name}
              </h2>
            </motion.div>
@@ -200,7 +174,7 @@ export default function WasteSortingRacePage() {
       </div>
 
       {/* TEAM PANELS */}
-      <div className="flex-1 w-full max-w-7xl px-8 pb-24 z-10 flex gap-8 min-h-0">
+      <div className="flex-1 w-full z-10 flex gap-8 min-h-0" style={{ padding: "0 clamp(20px, 4vw, 60px) clamp(8px, 1.2vh, 14px)" }}>
         <div className="flex-1 min-w-0">
           <TeamPanel 
             player={2} 
@@ -208,7 +182,7 @@ export default function WasteSortingRacePage() {
             lastResult={p2LastResult}
             score={p2Score}
             onGuess={(cat) => handleGuess(2, cat)} 
-            disabled={phase !== "playing"} 
+            disabled={phase !== "playing" || locked} 
           />
         </div>
         <div className="flex-1 min-w-0">
@@ -218,12 +192,12 @@ export default function WasteSortingRacePage() {
             lastResult={p1LastResult}
             score={p1Score}
             onGuess={(cat) => handleGuess(1, cat)} 
-            disabled={phase !== "playing"} 
+            disabled={phase !== "playing" || locked} 
           />
         </div>
       </div>
 
-      {/* COUNTDOWN OVERLAY */}
+      {/* ── COUNTDOWN OVERLAY ── */}
       <AnimatePresence>
         {phase === "countdown" && (
           <motion.div
@@ -246,13 +220,6 @@ export default function WasteSortingRacePage() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* BOTTOM MENU BUTTON */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-30">
-        <Link href="/" className="bg-white hover:bg-gray-50 border-2 border-[#bae6fd] text-gray-700 font-bold px-8 py-3 rounded-full shadow-lg transition-all flex items-center gap-2" style={{ textDecoration: "none", fontSize: "clamp(14px, 1.5vw, 20px)" }}>
-          ← Menu Utama
-        </Link>
-      </div>
 
       <VictoryResultModal isOpen={phase === "finished"} winner={winner} p1Score={p1Score} p2Score={p2Score} p1Label="Tim Biru" p2Label="Tim Merah" onRematch={handleRematch} />
     </div>

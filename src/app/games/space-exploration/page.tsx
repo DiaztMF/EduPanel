@@ -1,204 +1,132 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Link from "next/link";
-import { SOLAR_SYSTEM, ALL_MOONS, type Planet, type Moon } from "@/data/solar-system";
+import { GameHeader } from "@/components/game/GameHeader";
+import { SOLAR_SYSTEM, ALL_MOONS } from "@/data/solar-system";
 import { VictoryResultModal } from "@/components/game/VictoryResultModal";
 
 type Phase = "intro" | "playing" | "finished";
 
-// ─── Orbit ring + planet ───
-function PlanetOrbit({ planet, index, selectedPlanet, onSelect }: {
-  planet: Planet; index: number; selectedPlanet: string | null; onSelect: (id: string) => void;
-}) {
-  const isSelected = selectedPlanet === planet.id;
-  const angleOffset = (index / SOLAR_SYSTEM.length) * 360;
+// ─── SVG coordinate system ───
+const SUN_X = 270;
+const SUN_Y = 450;
+const VB_W  = 1600;
+const VB_H  = 900;
 
-  return (
-    <g>
-      {/* Orbit circle */}
-      <circle cx="50%" cy="50%" r={planet.orbitRadius} fill="none"
-        stroke="rgba(0,0,0,0.1)" strokeWidth="2" strokeDasharray="4 6" />
-      {/* Planet */}
-      <motion.text
-        x={`calc(50% + ${planet.orbitRadius}px)`}
-        y="50%"
-        textAnchor="middle"
-        dominantBaseline="middle"
-        style={{
-          fontSize: planet.size,
-          cursor: "pointer",
-          filter: isSelected ? `drop-shadow(0 0 12px ${planet.color})` : "none",
-          transformOrigin: "center",
-        }}
-        animate={{ rotate: angleOffset }}
-        onClick={() => onSelect(planet.id)}
-      >
-        {planet.emoji}
-      </motion.text>
-    </g>
-  );
-}
+// Orbit ellipse params + fixed angle for each planet
+const ORBIT_CFG = [
+  { id: "mercury", rx: 105,  ry: 40,  angleDeg: -50 },
+  { id: "venus",   rx: 185,  ry: 70,  angleDeg:  28 },
+  { id: "earth",   rx: 272,  ry: 103, angleDeg: -38 },
+  { id: "mars",    rx: 362,  ry: 138, angleDeg:  14 },
+  { id: "jupiter", rx: 490,  ry: 186, angleDeg: -22 },
+  { id: "saturn",  rx: 625,  ry: 237, angleDeg:  36 },
+  { id: "uranus",  rx: 748,  ry: 284, angleDeg: -46 },
+  { id: "neptune", rx: 870,  ry: 330, angleDeg:  10 },
+];
 
-// ─── Moon Card (draggable / tappable) ───
-function MoonCard({ moon, isPlaced, onDrop }: {
-  moon: Moon; isPlaced: boolean; onDrop: (moonId: string, planetId: string) => void;
-}) {
-  const [showTargets, setShowTargets] = useState(false);
-
-  if (isPlaced) return null;
-
-  return (
-    <div className="relative">
-      <motion.button
-        onPointerDown={(e) => { e.stopPropagation(); setShowTargets((v) => !v); }}
-        whileTap={{ scale: 0.88 }}
-        className="flex flex-col items-center gap-1 touch-btn w-full bg-white shadow-sm border border-gray-200"
-        style={{
-          borderRadius: "12px", padding: "clamp(8px,1.2vh,16px) clamp(10px,1.5vw,20px)",
-          touchAction: "manipulation",
-        }}
-      >
-        <span style={{ fontSize: "clamp(22px,3.5vw,48px)" }}>{moon.emoji}</span>
-        <span className="font-bold text-gray-700" style={{ fontSize: "clamp(8px,0.9vw,12px)" }}>{moon.name}</span>
-      </motion.button>
-
-      {/* Planet selection popup */}
-      <AnimatePresence>
-        {showTargets && (
-          <motion.div
-            initial={{ opacity: 0, x: -10, scale: 0.9 }} animate={{ opacity: 1, x: 0, scale: 1 }} exit={{ opacity: 0, scale: 0.85 }}
-            className="absolute z-30 flex flex-col gap-1 p-2 rounded-xl bg-white shadow-xl border border-gray-200"
-            style={{ top: 0, right: "110%", minWidth: "clamp(120px,16vw,200px)" }}
-          >
-            <p className="text-gray-500 text-center font-bold mb-1" style={{ fontSize: "clamp(8px,0.85vw,11px)" }}>Pilih planet:</p>
-            {SOLAR_SYSTEM.filter((p) => p.moons.length > 0).map((p) => (
-              <motion.button key={p.id}
-                onPointerDown={(e) => { e.stopPropagation(); onDrop(moon.id, p.id); setShowTargets(false); }}
-                whileTap={{ scale: 0.92 }}
-                className="flex items-center gap-2 font-bold rounded-lg touch-btn shadow-sm"
-                style={{ padding: "clamp(4px,0.6vh,8px) clamp(8px,1vw,14px)", background: `${p.color}15`, color: p.color, border: `1px solid ${p.color}40`, fontSize: "clamp(9px,1vw,14px)", touchAction: "manipulation" }}
-              >
-                <span>{p.emoji}</span><span>{p.name}</span>
-              </motion.button>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
+// Deterministic star field
+const STARS = Array.from({ length: 110 }, (_, i) => ({
+  cx: ((i * 233 + 71) % (VB_W - 60)) + 30,
+  cy: ((i * 157 + 43) % (VB_H - 40)) + 20,
+  r:  i % 5 === 0 ? 2.5 : i % 3 === 0 ? 1.5 : 1,
+  op: 0.25 + (i % 7) * 0.1,
+}));
 
 // ─── Main Page ───
 export default function SpaceExplorationPage() {
-  const [phase, setPhase] = useState<Phase>("intro");
-  const [placed, setPlaced] = useState<Record<string, string>>({}); // moonId → planetId
-  const [correct, setCorrect] = useState<Set<string>>(new Set());
-  const [wrong, setWrong] = useState<Set<string>>(new Set());
-  const [selectedPlanet, setSelectedPlanet] = useState<string | null>(null);
-  const [score, setScore] = useState(0);
+  const [phase, setPhase]               = useState<Phase>("intro");
+  const [correct, setCorrect]           = useState<Set<string>>(new Set());
+  const [score, setScore]               = useState(0);
   const [totalAttempts, setTotalAttempts] = useState(0);
+  const [wrongGuess, setWrongGuess]     = useState<string | null>(null);
+  const [feedback, setFeedback]         = useState<{ type: "correct" | "wrong", msg: string } | null>(null);
 
-  const totalMoons = ALL_MOONS.length;
+  const totalMoons   = ALL_MOONS.length;
   const correctCount = correct.size;
-  const isComplete = correctCount === totalMoons;
 
-  useEffect(() => {
-    if (isComplete && phase === "playing") setPhase("finished");
-  }, [isComplete, phase]);
+  // Ref mirrors `correct` so handleDrop can check completion without stale closure
+  const correctRef = useRef<Set<string>>(new Set());
 
-  const handleDrop = useCallback((moonId: string, planetId: string) => {
+  const unplacedMoons = ALL_MOONS.filter((m) => !correct.has(m.id));
+  const currentMoon = unplacedMoons[0] || null; // The active flashcard question
+
+  const handlePlanetGuess = (planetId: string) => {
+    if (phase !== "playing" || !currentMoon) return;
+    
     setTotalAttempts((a) => a + 1);
-    const moon = ALL_MOONS.find((m) => m.id === moonId);
-    if (!moon) return;
-
-    const isCorrect = moon.planet === planetId;
-    setPlaced((p) => ({ ...p, [moonId]: planetId }));
-
-    if (isCorrect) {
-      setCorrect((c) => new Set([...c, moonId]));
+    
+    if (currentMoon.planet === planetId) {
+      // Correct guess
+      const nextCorrect = new Set([...correctRef.current, currentMoon.id]);
+      correctRef.current = nextCorrect;
+      setCorrect(nextCorrect);
       setScore((s) => s + 15);
-      // Remove from wrong if was wrong before
-      setWrong((w) => { const nw = new Set(w); nw.delete(moonId); return nw; });
+      setWrongGuess(null);
+      setFeedback({ type: "correct", msg: "+15" });
+      setTimeout(() => setFeedback(null), 600);
+      
+      // Complete check
+      if (nextCorrect.size === totalMoons) setPhase("finished");
     } else {
-      setWrong((w) => new Set([...w, moonId]));
-      setScore((s) => Math.max(0, s - 5));
-      // Remove the wrong placement after 1s
-      setTimeout(() => setPlaced((p) => { const np = { ...p }; delete np[moonId]; return np; }), 1000);
+      // Wrong guess
+      setWrongGuess(planetId);
+      setFeedback({ type: "wrong", msg: "SALAH!" });
+      setTimeout(() => { setWrongGuess(null); setFeedback(null); }, 600); // clear shake & feedback
     }
-  }, []);
+  };
 
   const handleReset = () => {
-    setPhase("intro"); setPlaced({}); setCorrect(new Set()); setWrong(new Set());
-    setScore(0); setTotalAttempts(0); setSelectedPlanet(null);
+    correctRef.current = new Set();
+    setPhase("intro"); 
+    setCorrect(new Set()); 
+    setScore(0); 
+    setTotalAttempts(0);
+    setWrongGuess(null);
+    setFeedback(null);
   };
-
-  const activePlanet = selectedPlanet ? SOLAR_SYSTEM.find((p) => p.id === selectedPlanet) : null;
-  const unplacedMoons = ALL_MOONS.filter((m) => !correct.has(m.id));
-  
-  const isFullscreen = () => {
-    if (typeof window !== "undefined" && document.fullscreenElement) {
-      document.exitFullscreen();
-    } else if (typeof window !== "undefined") {
-      document.documentElement.requestFullscreen().catch(() => {});
-    }
-  };
-
-  const progressPct = Math.min((correctCount / totalMoons) * 100, 100);
 
   return (
-    <div className="w-full h-full flex flex-col items-center bg-[#e0f2fe] relative overflow-hidden text-gray-900 font-sans">
-      
-      {/* TOP HEADER */}
-      <div className="w-full flex items-center justify-between px-6 py-4 shadow-sm bg-[#e0f2fe] z-10">
-        <div className="w-32 flex justify-start">
-        </div>
-        <div className="flex-1 flex justify-center items-center gap-4">
-          <div className="font-bold text-[#0ea5e9] tracking-wide" style={{ fontSize: "clamp(20px, 2vw, 32px)" }}>
-             Space Exploration
+    <div className="w-full h-full flex flex-col bg-[#e0f2fe] relative overflow-hidden font-sans">
+
+      {/* ── SHARED GAME HEADER ── */}
+      <GameHeader title="Space Exploration" subtitle="Jelajah Tata Surya" />
+
+      {/* ── MAIN 3-COLUMN LAYOUT ── */}
+      <div
+        className="flex-1 w-full flex min-h-0"
+        style={{ gap: "clamp(8px,1.2vw,16px)", padding: "clamp(6px,1vh,12px) clamp(16px,3vw,48px) clamp(8px,1.2vh,14px)" }}
+      >
+        {/* LEFT: Planet list */}
+        <div
+          className="flex flex-col bg-white rounded-2xl shadow-lg border-2 overflow-hidden h-full flex-shrink-0"
+          style={{ borderColor: "#1e3a8a", width: "clamp(140px,17vw,250px)" }}
+        >
+          <div className="flex items-center justify-between text-white px-4 shadow-inner flex-shrink-0 bg-[#1e1b4b]"
+            style={{ paddingBlock: "clamp(8px,1.2vh,14px)" }}>
+            <h2 className="font-bold tracking-widest" style={{ fontSize: "clamp(10px,0.95vw,15px)" }}>PLANET</h2>
+            <div className="font-black bg-white/20 px-2 py-0.5 rounded-lg" style={{ fontSize: "clamp(10px,0.9vw,13px)" }}>{correctCount}/{totalMoons}</div>
           </div>
-        </div>
-        <div className="w-32 flex justify-end">
-           <button onPointerDown={isFullscreen} className="bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 font-bold px-4 py-2 rounded-lg shadow-sm transition-colors">
-             🖥️
-           </button>
-        </div>
-      </div>
-
-
-
-      {/* MAIN CONTENT PANELS */}
-      <div className="flex-1 w-full max-w-7xl px-8 pb-24 z-10 flex gap-6 min-h-0">
-
-        {/* LEFT: Planet panel (TIM BIRU style) */}
-        <div className="flex flex-col bg-white rounded-2xl shadow-lg border-2 overflow-hidden h-full flex-shrink-0" style={{ borderColor: "#1e3a8a", width: "clamp(160px,20vw,280px)" }}>
-          <div className="flex items-center justify-between text-white py-3 px-4 shadow-inner relative bg-[#1e1b4b]">
-            <h2 className="font-bold tracking-widest text-left" style={{ fontSize: "clamp(12px, 1vw, 18px)" }}>PLANET TATA SURYA</h2>
-            <div className="font-black bg-white/20 px-2 py-1 rounded-lg" style={{ fontSize: "clamp(10px, 1vw, 14px)" }}>{correctCount}/{totalMoons}</div>
-          </div>
-          <div className="flex-1 flex flex-col gap-2 p-4 bg-[#f8fafc] overflow-y-auto">
+          <div className="flex-1 flex flex-col min-h-0 overflow-y-auto p-2" style={{ gap: "clamp(4px,0.6vh,8px)", background: "#f8fafc" }}>
             {SOLAR_SYSTEM.map((p) => {
-              const placedMoons = ALL_MOONS.filter((m) => m.planet === p.id && correct.has(m.id));
-              const totalPlanetMoons = p.moons.length;
-              const isSelected = selectedPlanet === p.id;
-
+              const placed_ = ALL_MOONS.filter((m) => m.planet === p.id && correct.has(m.id));
+              const isWrong = wrongGuess === p.id;
+              
               return (
                 <motion.button key={p.id}
-                  onPointerDown={(e) => { e.stopPropagation(); setSelectedPlanet(isSelected ? null : p.id); }}
-                  animate={{ background: isSelected ? `${p.color}25` : "#ffffff" }}
-                  className="flex items-center gap-2 rounded-xl touch-btn text-left shadow-sm border-2"
-                  style={{ padding: "clamp(6px,0.8vh,10px) clamp(8px,1vw,14px)", borderColor: isSelected ? p.color : "#e5e7eb", touchAction: "manipulation" }}
+                  onPointerDown={(e) => { e.stopPropagation(); handlePlanetGuess(p.id); }}
+                  animate={isWrong ? { x: [-4, 4, -4, 4, 0], background: "#fee2e2", borderColor: "#ef4444" } : { x: 0, background: "#ffffff", borderColor: "#e5e7eb" }}
+                  transition={{ duration: 0.4 }}
+                  className="flex items-center gap-2 rounded-xl touch-btn text-left shadow-sm border-2 flex-shrink-0"
+                  style={{ padding: "clamp(5px,0.7vh,9px) clamp(6px,0.8vw,12px)", touchAction: "manipulation" }}
                 >
-                  <span style={{ fontSize: "clamp(16px,2.2vw,30px)" }}>{p.emoji}</span>
+                  <span style={{ fontSize: "clamp(14px,2vw,26px)", flexShrink: 0 }}>{p.emoji}</span>
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold text-gray-800 truncate" style={{ fontSize: "clamp(10px,1vw,14px)" }}>{p.name}</p>
-                    {totalPlanetMoons > 0 && (
-                      <p className="font-bold" style={{ fontSize: "clamp(8px,0.8vw,11px)", color: placedMoons.length === totalPlanetMoons ? "#10b981" : "#9ca3af" }}>
-                        {placedMoons.length}/{totalPlanetMoons} bulan ✓
-                      </p>
-                    )}
-                    {totalPlanetMoons === 0 && <p className="font-bold" style={{ fontSize: "clamp(8px,0.8vw,11px)", color: "#d1d5db" }}>Tidak ada bulan</p>}
+                    <p className="font-bold text-gray-800 truncate" style={{ fontSize: "clamp(9px,0.9vw,13px)" }}>{p.name}</p>
+                    <p className="font-bold" style={{ fontSize: "clamp(8px,0.75vw,10px)", color: placed_.length === p.moons.length && p.moons.length > 0 ? "#10b981" : "#9ca3af" }}>
+                      {p.moons.length > 0 ? `${placed_.length}/${p.moons.length} bulan ✓` : "Tidak ada bulan"}
+                    </p>
                   </div>
                 </motion.button>
               );
@@ -207,78 +135,165 @@ export default function SpaceExplorationPage() {
         </div>
 
         {/* CENTER: Solar system visual */}
-        <div className="flex-1 relative flex items-center justify-center min-h-0 bg-white rounded-2xl shadow-lg border border-gray-200">
-          <div className="relative w-full h-full">
-            {/* Sun */}
-            <motion.div className="absolute" style={{ top: "50%", left: "50%", transform: "translate(-50%,-50%)" }}
-              animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 3 }}>
-              <span style={{ fontSize: "clamp(40px,6vw,80px)", filter: "drop-shadow(0 0 30px #f59e0b)" }}>☀️</span>
-            </motion.div>
+        <div className="flex-1 relative rounded-2xl overflow-hidden shadow-xl border border-[#1e3a5e]/40 min-w-0">
+          {/* SVG layer — space bg + stars + orbit rings */}
+          <svg
+            className="absolute inset-0 w-full h-full"
+            viewBox={`0 0 ${VB_W} ${VB_H}`}
+            preserveAspectRatio="xMidYMid meet"
+            aria-hidden
+          >
+            {/* Background */}
+            <rect width={VB_W} height={VB_H} fill="#040d21" />
 
-            {/* Planets around sun */}
-            {SOLAR_SYSTEM.map((p, i) => {
-              const angle = (i / SOLAR_SYSTEM.length) * Math.PI * 2 - Math.PI / 2;
-              const r = Math.min(p.orbitRadius * 0.4, 280); // scale down for viewport
-              const cx = 50; // percentage
-              const cy = 50;
-              const px = cx + (r / 3) * Math.cos(angle);
-              const py = cy + (r / 3) * Math.sin(angle) * 0.55;
+            {/* Stars */}
+            {STARS.map((s, i) => (
+              <circle key={i} cx={s.cx} cy={s.cy} r={s.r} fill="white" opacity={s.op} />
+            ))}
 
-              const placedMoonsHere = ALL_MOONS.filter((m) => m.planet === p.id && correct.has(m.id));
-              const isSelected = selectedPlanet === p.id;
+            {/* Sun glow */}
+            <defs>
+              <radialGradient id="sunGlow">
+                <stop offset="0%"   stopColor="#fff7ed" />
+                <stop offset="30%"  stopColor="#fbbf24" />
+                <stop offset="70%"  stopColor="#f59e0b" />
+                <stop offset="100%" stopColor="#f59e0b" stopOpacity="0" />
+              </radialGradient>
+            </defs>
+            <circle cx={SUN_X} cy={SUN_Y} r={130} fill="url(#sunGlow)" />
 
-              return (
-                <motion.button key={p.id}
-                  onPointerDown={(e) => { e.stopPropagation(); setSelectedPlanet(isSelected ? null : p.id); }}
-                  className="absolute flex flex-col items-center touch-btn"
-                  style={{ left: `${px}%`, top: `${py}%`, transform: "translate(-50%,-50%)", touchAction: "manipulation" }}
-                  animate={{ scale: isSelected ? 1.2 : 1 }}
-                  transition={{ type: "spring", stiffness: 200 }}
-                >
-                  <span style={{ fontSize: p.size, filter: isSelected ? `drop-shadow(0 0 16px ${p.color})` : "none" }}>{p.emoji}</span>
-                  <span className="font-bold bg-white/80 px-1 rounded" style={{ fontSize: "clamp(8px,0.8vw,12px)", color: p.color, marginTop: 2 }}>{p.name}</span>
-                  {placedMoonsHere.length > 0 && (
-                    <div className="flex gap-0.5 mt-0.5">
-                      {placedMoonsHere.map((m) => <span key={m.id} style={{ fontSize: "clamp(8px,1vw,14px)" }}>🌕</span>)}
-                    </div>
-                  )}
-                </motion.button>
-              );
-            })}
-          </div>
-        </div>
+            {/* Orbit rings */}
+            {ORBIT_CFG.map((cfg) => (
+              <ellipse
+                key={cfg.id}
+                cx={SUN_X} cy={SUN_Y}
+                rx={cfg.rx} ry={cfg.ry}
+                fill="none"
+                stroke="rgba(147,210,255,0.22)"
+                strokeWidth="1.5"
+              />
+            ))}
+          </svg>
 
-        {/* RIGHT: Moon panel (TIM MERAH style) */}
-        <div className="flex flex-col bg-white rounded-2xl shadow-lg border-2 overflow-hidden h-full flex-shrink-0" style={{ borderColor: "#b91c1c", width: "clamp(160px,20vw,280px)" }}>
-          <div className="flex items-center justify-between text-white py-3 px-4 shadow-inner relative bg-[#7f1d1d]">
-            <h2 className="font-bold tracking-widest text-left" style={{ fontSize: "clamp(12px, 1vw, 18px)" }}>SATELIT ALAMI</h2>
-            <div className="font-black bg-white/20 px-2 py-1 rounded-lg" style={{ fontSize: "clamp(10px, 1vw, 14px)" }}>{score} pts</div>
-          </div>
-          <div className="flex-1 flex flex-col gap-2 p-4 bg-[#f8fafc] overflow-y-auto">
-            {/* Selected planet info */}
-            {activePlanet && (
-              <motion.div key={activePlanet.id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-                className="bg-white rounded-xl shadow-sm border p-3 mb-2" style={{ borderColor: activePlanet.color }}>
-                <p className="font-black text-gray-800" style={{ fontSize: "clamp(12px,1.6vw,20px)" }}>{activePlanet.emoji} {activePlanet.name}</p>
-                <p className="text-gray-500 mt-1 font-bold" style={{ fontSize: "clamp(8px,0.9vw,12px)" }}>{activePlanet.fact}</p>
-                {activePlanet.moons.length > 0 && (
-                  <p className="mt-2 font-bold" style={{ fontSize: "clamp(8px,0.85vw,11px)", color: activePlanet.color }}>
-                    {activePlanet.moons.length} bulan: {activePlanet.moons.map((m) => m.name).join(", ")}
-                  </p>
-                )}
+          {/* Feedback Overlay */}
+          <AnimatePresence>
+            {feedback && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.5, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.5, y: -20 }}
+                className="absolute font-black z-30 pointer-events-none"
+                style={{
+                  top: "20%",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  color: feedback.type === "correct" ? "#10b981" : "#ef4444",
+                  fontSize: "clamp(60px, 8vw, 100px)",
+                  filter: "drop-shadow(0 4px 10px rgba(0,0,0,0.6))",
+                }}
+              >
+                {feedback.msg}
               </motion.div>
             )}
+          </AnimatePresence>
 
-            <p className="font-bold text-gray-400 text-center uppercase mb-2" style={{ fontSize: "clamp(10px,1vw,14px)", letterSpacing: "0.1em" }}>🌕 {unplacedMoons.length} Tersisa</p>
+          {/* Planets */}
+          {SOLAR_SYSTEM.map((planet, i) => {
+            const cfg   = ORBIT_CFG[i];
+            const rad   = cfg.angleDeg * Math.PI / 180;
+            const pxPct = ((SUN_X + cfg.rx * Math.cos(rad)) / VB_W) * 100;
+            const pyPct = ((SUN_Y + cfg.ry * Math.sin(rad)) / VB_H) * 100;
+            const isWrong = wrongGuess === planet.id;
+            const correctMoons = ALL_MOONS.filter((m) => m.planet === planet.id && correct.has(m.id));
 
-            <div className="flex flex-col gap-3">
-              {unplacedMoons.map((moon) => (
-                <MoonCard key={moon.id} moon={moon} isPlaced={correct.has(moon.id)} onDrop={handleDrop} />
-              ))}
-              {unplacedMoons.length === 0 && (
-                <p className="text-center text-green-500 font-bold p-4" style={{ fontSize: "clamp(12px,1.2vw,16px)" }}>Semua bulan telah dipetakan! 🎉</p>
+            return (
+              <motion.button
+                key={planet.id}
+                className="absolute flex flex-col items-center touch-btn group"
+                style={{ left: `${pxPct}%`, top: `${pyPct}%`, transform: "translate(-50%,-50%)", touchAction: "manipulation", zIndex: 10 }}
+                animate={isWrong ? { x: [-8, 8, -8, 8, 0], scale: 1.1 } : { x: 0, scale: 1 }}
+                whileHover={{ scale: 1.2 }}
+                whileTap={{ scale: 0.9 }}
+                transition={{ default: { type: "spring", stiffness: 220, damping: 18 }, x: { type: "tween", duration: 0.4 } }}
+                onPointerDown={(e) => { e.stopPropagation(); handlePlanetGuess(planet.id); }}
+              >
+                {/* Planet Emoji */}
+                <span style={{ fontSize: planet.size, filter: isWrong ? "drop-shadow(0 0 16px #ef4444)" : "drop-shadow(0 0 8px rgba(255,255,255,0.1))", display: "block" }}>
+                  {planet.emoji}
+                </span>
+                
+                {/* Planet Name */}
+                <span className="font-bold" style={{ fontSize: "clamp(8px,0.8vw,12px)", color: isWrong ? "#ef4444" : "white", background: "rgba(0,0,0,0.6)", borderRadius: "6px", padding: "2px 6px", marginTop: "4px", whiteSpace: "nowrap" }}>
+                  {planet.name}
+                </span>
+
+                {/* Placed Moons Icons */}
+                {correctMoons.length > 0 && (
+                  <div className="flex gap-1 mt-1">
+                    {correctMoons.map((m) => <span key={m.id} style={{ fontSize: "clamp(8px,1vw,14px)" }}>🌕</span>)}
+                  </div>
+                )}
+              </motion.button>
+            );
+          })}
+        </div>
+
+        {/* RIGHT: Active Question Panel */}
+        <div
+          className="flex flex-col bg-white rounded-2xl shadow-lg border-2 overflow-hidden h-full flex-shrink-0"
+          style={{ borderColor: "#b91c1c", width: "clamp(160px,20vw,300px)" }}
+        >
+          <div className="flex items-center justify-between text-white px-4 shadow-inner flex-shrink-0 bg-[#7f1d1d]"
+            style={{ paddingBlock: "clamp(8px,1.2vh,14px)" }}>
+            <h2 className="font-bold tracking-widest" style={{ fontSize: "clamp(10px,0.95vw,15px)" }}>TEBAK BULAN</h2>
+            <div className="font-black bg-white/20 px-2 py-0.5 rounded-lg" style={{ fontSize: "clamp(10px,0.9vw,13px)" }}>{score} pts</div>
+          </div>
+          
+          <div className="flex-1 flex flex-col bg-[#f8fafc] p-4 relative justify-center items-center">
+            <p className="font-bold text-gray-400 text-center uppercase absolute top-4" style={{ fontSize: "clamp(10px,1vw,14px)", letterSpacing: "0.1em" }}>
+              🌕 {unplacedMoons.length} TERSISA
+            </p>
+
+            <AnimatePresence mode="wait">
+              {currentMoon ? (
+                <motion.div
+                  key={currentMoon.id}
+                  initial={{ scale: 0.8, opacity: 0, y: 20 }}
+                  animate={{ scale: 1, opacity: 1, y: 0 }}
+                  exit={{ scale: 0.8, opacity: 0, y: -20 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  className="flex flex-col items-center justify-center text-center gap-4 w-full"
+                >
+                  <p className="text-gray-500 font-bold" style={{ fontSize: "clamp(12px,1.2vw,16px)" }}>Bulan apakah ini?</p>
+                  
+                  <div className="bg-white rounded-2xl shadow-md border-2 border-red-100 p-6 w-full flex flex-col items-center">
+                    <span style={{ fontSize: "clamp(50px, 6vw, 100px)", filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.1))" }}>
+                      {currentMoon.emoji}
+                    </span>
+                    <h3 className="font-black text-gray-800 mt-2" style={{ fontSize: "clamp(20px, 2.2vw, 32px)" }}>
+                      {currentMoon.name}
+                    </h3>
+                  </div>
+
+                  <div className="bg-red-50 text-red-900 rounded-xl p-4 border border-red-100 w-full mt-2 shadow-inner">
+                    <p className="font-bold text-sm uppercase tracking-widest text-red-700/60 mb-1" style={{ fontSize: "clamp(8px,0.8vw,11px)" }}>CLUE</p>
+                    <p className="font-bold" style={{ fontSize: "clamp(11px,1.2vw,15px)" }}>{currentMoon.fact}</p>
+                  </div>
+                  
+                  <p className="text-gray-400 font-bold animate-pulse mt-4" style={{ fontSize: "clamp(10px,1vw,14px)" }}>
+                    👈 Sentuh planet yang benar!
+                  </p>
+                </motion.div>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                  className="flex flex-col items-center justify-center text-center h-full gap-4"
+                >
+                  <span style={{ fontSize: "clamp(60px,8vw,100px)" }}>🎉</span>
+                  <p className="font-black text-green-500" style={{ fontSize: "clamp(18px,2vw,28px)" }}>Semua satelit terpetakan!</p>
+                </motion.div>
               )}
-            </div>
+            </AnimatePresence>
           </div>
         </div>
       </div>
@@ -288,31 +303,33 @@ export default function SpaceExplorationPage() {
         {phase === "intro" && (
           <motion.div
             className="absolute inset-0 z-40 flex flex-col items-center justify-center gap-6"
-            style={{ background: "rgba(224,242,254,0.95)", backdropFilter: "blur(12px)" }}
+            style={{ background: "rgba(4,13,33,0.92)", backdropFilter: "blur(16px)" }}
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
           >
-            <span style={{ fontSize: "clamp(60px,10vw,120px)" }}>🚀</span>
+            <span style={{ fontSize: "clamp(56px,9vw,110px)" }}>🚀</span>
             <div className="text-center">
-              <h2 className="font-black text-[#0ea5e9]" style={{ fontSize: "clamp(32px,4vw,56px)" }}>Space Exploration</h2>
-              <p className="text-gray-600 font-bold mt-2" style={{ fontSize: "clamp(16px,1.6vw,22px)" }}>Petakan semua satelit alami (bulan) ke planet asalnya!</p>
+              <h2 className="font-black text-[#38bdf8]" style={{ fontSize: "clamp(28px,3.5vw,52px)" }}>Space Exploration</h2>
+              <p className="text-gray-300 font-bold mt-2 max-w-2xl px-4" style={{ fontSize: "clamp(14px,1.4vw,20px)" }}>
+                Baca fakta tentang satelit alami (bulan) di kartu kuis, lalu tebak dengan menyentuh planet asalnya di tata surya!
+              </p>
             </div>
-            <motion.button onPointerDown={() => setPhase("playing")} whileTap={{ scale: 0.92 }}
+            <motion.button
+              onPointerDown={() => setPhase("playing")} whileTap={{ scale: 0.92 }}
               className="touch-btn font-black border-2 border-b-4"
-              style={{ background: "#3b82f6", borderColor: "#1d4ed8", color: "white", borderRadius: "16px", padding: "clamp(14px,2vh,24px) clamp(32px,5vw,64px)", fontSize: "clamp(16px,2.2vw,30px)", touchAction: "manipulation" }}>
+              style={{ background: "#3b82f6", borderColor: "#1d4ed8", color: "white", borderRadius: "16px", padding: "clamp(12px,1.8vh,22px) clamp(28px,4.5vw,58px)", fontSize: "clamp(14px,2vw,28px)", touchAction: "manipulation" }}
+            >
               🚀 Mulai Penjelajahan
             </motion.button>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* BOTTOM MENU BUTTON */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-30">
-        <Link href="/" className="bg-white hover:bg-gray-50 border-2 border-[#bae6fd] text-gray-700 font-bold px-8 py-3 rounded-full shadow-lg transition-all flex items-center gap-2" style={{ textDecoration: "none", fontSize: "clamp(14px, 1.5vw, 20px)" }}>
-          ← Menu Utama
-        </Link>
-      </div>
-
-      <VictoryResultModal isOpen={phase === "finished"} winner={null} p1Score={score} p2Score={totalAttempts} p1Label={`Skor: ${score}`} p2Label={`Percobaan: ${totalAttempts}`} onRematch={handleReset} rematchLabel="Coba Lagi" />
+      <VictoryResultModal
+        isOpen={phase === "finished"} winner={null}
+        p1Score={score} p2Score={totalAttempts}
+        p1Label={`Skor: ${score}`} p2Label={`Percobaan: ${totalAttempts}`}
+        onRematch={handleReset} rematchLabel="Coba Lagi"
+      />
     </div>
   );
 }

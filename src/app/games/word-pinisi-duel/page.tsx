@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Link from "next/link";
 import { usePinisiStore, MAX_ERRORS } from "@/store/usePinisiStore";
-import { GlobalTimer } from "@/components/game/GlobalTimer";
+import { GameHeader } from "@/components/game/GameHeader";
 import { VictoryResultModal } from "@/components/game/VictoryResultModal";
 import { CATEGORY_LABEL } from "@/data/word-challenges";
 
@@ -47,7 +46,7 @@ function MultipleChoiceOptions({
   options: string[]; answer: string; guessed: Set<string>; onGuess: (opt: string) => void; disabled: boolean;
 }) {
   return (
-    <div className="flex flex-col w-full h-full justify-center" style={{ gap: "clamp(8px, 1.5vh, 16px)" }}>
+    <div className="flex flex-col w-full flex-1 min-h-0" style={{ gap: "clamp(6px, 1vh, 12px)" }}>
       {options.map((opt) => {
         const isGuessed = guessed.has(opt);
         const isCorrect = opt === answer;
@@ -58,7 +57,7 @@ function MultipleChoiceOptions({
         let hoverClass = "active:bg-[#e5e7eb] active:border-b-0 active:translate-y-1";
 
         if (isGuessed) {
-          hoverClass = ""; // disable interaction effect
+          hoverClass = "";
           if (isCorrect) {
             bgClass = "bg-[#4adeab]";
             textClass = "text-white";
@@ -75,10 +74,10 @@ function MultipleChoiceOptions({
             key={opt}
             onPointerDown={(e) => { e.stopPropagation(); if (!disabled && !isGuessed) onGuess(opt); }}
             disabled={disabled || isGuessed}
-            className={`font-black rounded-xl touch-btn flex items-center justify-center border-2 border-b-4 shadow-sm w-full transition-all ${bgClass} ${textClass} ${borderClass} ${hoverClass}`}
+            className={`font-black rounded-xl touch-btn flex items-center justify-center border-2 border-b-4 shadow-sm w-full flex-1 transition-all ${bgClass} ${textClass} ${borderClass} ${hoverClass}`}
             style={{
-              height: "clamp(48px, 7vh, 80px)",
-              fontSize: "clamp(18px, 2vw, 32px)",
+              minHeight: "clamp(44px, 5vh, 72px)",
+              fontSize: "clamp(16px, 1.8vw, 28px)",
               opacity: disabled && !isGuessed ? 0.7 : 1,
             }}
           >
@@ -102,24 +101,28 @@ function TeamPanel({ player, errors, guessed, options, answer, score, onGuess, d
 
   return (
     <div className="flex flex-col bg-white rounded-2xl shadow-lg border-2 overflow-hidden w-full h-full" style={{ borderColor: borderColor }}>
-      <div className="flex items-center justify-between text-white py-3 px-6 shadow-inner" style={{ backgroundColor: headerColor }}>
-        <h2 className="font-bold tracking-widest" style={{ fontSize: "clamp(16px, 1.5vw, 24px)" }}>{teamName}</h2>
-        <div className="font-black bg-white/20 px-3 py-1 rounded-lg" style={{ fontSize: "clamp(14px, 1.5vw, 20px)" }}>{score} pts</div>
+      {/* Header bar */}
+      <div className="flex items-center justify-between text-white px-6 shadow-inner flex-shrink-0" style={{ backgroundColor: headerColor, paddingBlock: "clamp(8px, 1.2vh, 16px)" }}>
+        <h2 className="font-bold tracking-widest" style={{ fontSize: "clamp(14px, 1.4vw, 22px)" }}>{teamName}</h2>
+        <div className="font-black bg-white/20 px-3 py-1 rounded-lg" style={{ fontSize: "clamp(13px, 1.3vw, 18px)" }}>{score} pts</div>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-start" style={{ padding: "clamp(16px, 2vh, 32px)", background: "#f8fafc" }}>
-        <div className="w-full flex justify-between items-start mb-4">
+      {/* Content: ship + options fills all remaining height */}
+      <div className="flex-1 flex flex-col min-h-0" style={{ padding: "clamp(10px, 1.5vh, 18px)", background: "#f8fafc", gap: "clamp(8px, 1.2vh, 14px)" }}>
+        {/* Ship status — compact, fixed height */}
+        <div className="flex justify-center items-center flex-shrink-0">
            <ShipDisplay errors={errors} player={player} />
         </div>
 
-        <div className="flex-1 w-full flex flex-col justify-center">
+        {/* Options or result — flex-1 to fill remaining space */}
+        <div className="flex-1 flex flex-col min-h-0">
           {isWordDone ? (
-            <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex flex-col items-center justify-center">
+            <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex-1 flex flex-col items-center justify-center">
               <p style={{ fontSize: "clamp(48px,5vw,80px)" }}>🎉</p>
               <p className="font-black text-[#10b981]" style={{ fontSize: "clamp(20px,2vw,36px)" }}>Berhasil!</p>
             </motion.div>
           ) : isGameOver ? (
-            <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex flex-col items-center justify-center">
+            <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex-1 flex flex-col items-center justify-center">
               <p style={{ fontSize: "clamp(48px,5vw,80px)" }}>💥</p>
               <p className="font-black text-[#ef4444]" style={{ fontSize: "clamp(20px,2vw,36px)" }}>Tenggelam!</p>
             </motion.div>
@@ -147,28 +150,34 @@ export default function WordPinisiDuelPage() {
   const [p2Score, setP2Score] = useState(0);
   const [winner, setWinner] = useState<"p1" | "p2" | "draw" | null>(null);
 
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setIsMounted(true), 0);
+    return () => clearTimeout(t);
+  }, []);
+
   const p1Done = p1Guessed.has(currentWord.answer);
   const p2Done = p2Guessed.has(currentWord.answer);
 
   // Countdown
   useEffect(() => {
     if (phase !== "countdown") return;
-    if (countdown <= 0) { setPhase("playing"); reset(); return; }
+    if (countdown <= 0) { 
+      const t = setTimeout(() => {
+        setPhase("playing"); 
+        reset(); 
+      }, 0);
+      return () => clearTimeout(t); 
+    }
     const id = setTimeout(() => setCountdown((c) => c - 1), 1000);
     return () => clearTimeout(id);
   }, [phase, countdown, reset]);
 
-  // Auto-advance
-  useEffect(() => {
-    if (phase !== "playing") return;
-    if (p1Done && !p2Done) setP1Score((s) => s + 10);
-    if (p2Done && !p1Done) setP2Score((s) => s + 10);
-    if (p1Done || p2Done || (p1Errors >= MAX_ERRORS && p2Errors >= MAX_ERRORS)) {
-      const t = setTimeout(() => nextWord(), 1500);
-      return () => clearTimeout(t);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [p1Done, p2Done, p1Errors, p2Errors, phase]);
+  const scoredRef = useRef<string | null>(null);
+
+  const p1Answered = p1Guessed.size > 0;
+  const p2Answered = p2Guessed.size > 0;
+  const anyAnswered = p1Answered || p2Answered;
 
   const finishGame = useCallback((forced?: "p1" | "p2") => {
     if (phase === "finished") return;
@@ -177,8 +186,28 @@ export default function WordPinisiDuelPage() {
     if (p1Score > p2Score) setWinner("p1");
     else if (p2Score > p1Score) setWinner("p2");
     else setWinner("draw");
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, p1Score, p2Score]);
+
+
+
+  // Auto-advance
+  useEffect(() => {
+    if (phase !== "playing") return;
+    
+    // Evaluate score immediately when answered
+    if (scoredRef.current !== currentWord.id && anyAnswered) {
+      scoredRef.current = currentWord.id;
+      if (p1Done) setTimeout(() => setP1Score((s) => s + 10), 0);
+      if (p2Done) setTimeout(() => setP2Score((s) => s + 10), 0);
+    }
+
+    if (anyAnswered) {
+      // Move to next word quickly after any answer
+      const t = setTimeout(() => nextWord(), 1200);
+      return () => clearTimeout(t);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [p1Done, p2Done, anyAnswered, phase, currentWord.id]);
 
   const handleGuess = (player: 1 | 2, option: string) => {
     if (phase !== "playing") return;
@@ -189,63 +218,40 @@ export default function WordPinisiDuelPage() {
     setPhase("countdown"); setCountdown(3); setP1Score(0); setP2Score(0); setWinner(null); reset();
   };
 
-  const isFullscreen = () => {
-    if (typeof window !== "undefined" && document.fullscreenElement) {
-      document.exitFullscreen();
-    } else if (typeof window !== "undefined") {
-      document.documentElement.requestFullscreen().catch(() => {});
-    }
-  };
-
-  // Convert scores to progress bar percentage (assuming max score is ~100 for a typical match)
-  const p1Pct = Math.min(p1Score / 100, 1) * 100;
-  const p2Pct = Math.min(p2Score / 100, 1) * 100;
+  if (!isMounted) return <div className="w-full h-full bg-[#e0f2fe]" />;
 
   return (
-    <div className="w-full h-full flex flex-col items-center bg-[#e0f2fe] relative overflow-hidden text-gray-900 font-sans">
-      
+    <div className="w-full h-full flex flex-col bg-[#e0f2fe] relative overflow-hidden text-gray-900 font-sans">
 
-
-      {/* TOP HEADER */}
-      <div className="w-full flex items-center justify-between px-6 py-4 shadow-sm bg-[#e0f2fe] z-10 flex-shrink-0">
-        <div className="w-32 flex justify-start"></div>
-        <div className="flex-1 flex justify-center items-center">
-          <div className="font-bold text-[#0ea5e9] tracking-wide" style={{ fontSize: "clamp(20px, 2vw, 32px)" }}>
-             {CATEGORY_LABEL[currentWord.category as keyof typeof CATEGORY_LABEL]}
-          </div>
-        </div>
-        <div className="w-32 flex justify-end">
-           <button onPointerDown={isFullscreen} className="bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 font-bold px-4 py-2 rounded-lg shadow-sm transition-colors">
-             🖥️
-           </button>
-        </div>
-      </div>
-
-      {/* TIMER */}
-      <div className="w-full flex justify-center z-20 mt-4 mb-2">
-        <GlobalTimer duration={GAME_DURATION} isRunning={phase === "playing"} onComplete={() => finishGame()} />
-      </div>
+      {/* ── SHARED GAME HEADER ── */}
+      <GameHeader
+        title="Duel Pinisi Kata"
+        subtitle={CATEGORY_LABEL[currentWord.category as keyof typeof CATEGORY_LABEL] ?? "Word Pinisi Duel"}
+        timerDuration={GAME_DURATION}
+        isTimerRunning={phase === "playing"}
+        onTimerComplete={() => finishGame()}
+      />
 
 
 
       {/* CENTER CLUE CARD */}
-      <div className="w-full max-w-6xl px-8 z-10 mb-4 flex justify-center">
+      <div className="w-full z-10 flex-shrink-0" style={{ padding: "clamp(8px, 1.2vh, 14px) clamp(20px, 4vw, 60px)" }}>
          <AnimatePresence mode="wait">
            <motion.div 
              key={currentWord.id}
              initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }}
-             className="bg-white rounded-2xl shadow-md border border-gray-200 text-center w-full flex items-center justify-center p-8"
-             style={{ minHeight: "clamp(100px, 15vh, 180px)" }}
+             className="bg-white rounded-2xl shadow-md border border-gray-200 text-center w-full flex items-center justify-center"
+             style={{ minHeight: "clamp(80px, 12vh, 160px)", padding: "clamp(14px, 2vh, 28px)" }}
            >
-             <h2 className="font-black text-[#1f2937] leading-tight" style={{ fontSize: "clamp(28px, 3vw, 56px)" }}>
-               {currentWord.clue}
+             <h2 className="font-black text-[#1f2937] leading-tight" style={{ fontSize: "clamp(22px, 2.5vw, 44px)" }}>
+                {currentWord.clue}
              </h2>
            </motion.div>
          </AnimatePresence>
       </div>
 
       {/* TEAM PANELS */}
-      <div className="flex-1 w-full max-w-7xl px-8 pb-24 z-10 flex gap-8 min-h-0">
+      <div className="flex-1 w-full z-10 flex gap-8 min-h-0" style={{ padding: "0 clamp(20px, 4vw, 60px) clamp(8px, 1.2vh, 14px)" }}>
         <div className="flex-1 min-w-0">
           <TeamPanel 
             player={2} 
@@ -255,7 +261,7 @@ export default function WordPinisiDuelPage() {
             answer={currentWord.answer}
             score={p2Score}
             onGuess={(l) => handleGuess(2, l)} 
-            disabled={phase !== "playing" || p2Done || p2Errors >= MAX_ERRORS} 
+            disabled={phase !== "playing" || anyAnswered || p2Errors >= MAX_ERRORS || p1Errors >= MAX_ERRORS} 
           />
         </div>
         <div className="flex-1 min-w-0">
@@ -267,12 +273,12 @@ export default function WordPinisiDuelPage() {
             answer={currentWord.answer}
             score={p1Score}
             onGuess={(l) => handleGuess(1, l)} 
-            disabled={phase !== "playing" || p1Done || p1Errors >= MAX_ERRORS} 
+            disabled={phase !== "playing" || anyAnswered || p1Errors >= MAX_ERRORS || p2Errors >= MAX_ERRORS} 
           />
         </div>
       </div>
 
-      {/* COUNTDOWN OVERLAY */}
+      {/* ── COUNTDOWN OVERLAY ── */}
       <AnimatePresence>
         {phase === "countdown" && (
           <motion.div
@@ -295,13 +301,6 @@ export default function WordPinisiDuelPage() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* BOTTOM MENU BUTTON */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-30">
-        <Link href="/" className="bg-white hover:bg-gray-50 border-2 border-[#bae6fd] text-gray-700 font-bold px-8 py-3 rounded-full shadow-lg transition-all flex items-center gap-2" style={{ textDecoration: "none", fontSize: "clamp(14px, 1.5vw, 20px)" }}>
-          ← Menu Utama
-        </Link>
-      </div>
 
       <VictoryResultModal isOpen={phase === "finished"} winner={winner} p1Score={p1Score} p2Score={p2Score} p1Label="Tim Biru" p2Label="Tim Merah" onRematch={handleRematch} />
     </div>

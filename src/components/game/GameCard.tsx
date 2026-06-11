@@ -9,7 +9,7 @@ export interface GameConfig {
   title: string;
   subtitle: string;
   icon: string;
-  category?: string; // Kept as optional if still defined in page.tsx
+  category?: string;
   description: string;
   players: number;
   duration: string;
@@ -19,9 +19,12 @@ export interface GameConfig {
 interface GameCardProps {
   game: GameConfig;
   index: number;
+  /** Category accent color passed from the section — e.g. #ffaa5e */
+  accentColor?: string;
+  accentBg?: string;
 }
 
-export function GameCard({ game, index }: GameCardProps) {
+export function GameCard({ game, index, accentColor = "#0ea5e9", accentBg = "#f0f9ff" }: GameCardProps) {
   const router = useRouter();
 
   const handlePress = () => {
@@ -29,75 +32,99 @@ export function GameCard({ game, index }: GameCardProps) {
     router.push(`/games/${game.slug}`);
   };
 
-  const borderColor = "#bae6fd"; // sky-200
-  const glowColor = "#f0f9ff"; // sky-50
-
   return (
     <motion.div
-      initial={{ opacity: 0, y: 24 }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-      whileTap={game.available ? { scale: 0.94 } : {}}
+      transition={{ delay: index * 0.04, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+      whileHover={game.available ? { y: -3, boxShadow: `0 8px 24px ${accentColor}25` } : {}}
+      whileTap={game.available ? { scale: 0.96 } : {}}
       onClick={handlePress}
-      className="bg-white rounded-2xl shadow-sm border-2 relative cursor-pointer select-none overflow-hidden hover:shadow-md transition-shadow"
+      className="bg-white rounded-2xl border-2 relative cursor-pointer select-none overflow-hidden flex flex-col transition-colors"
       style={{
-        padding: "clamp(16px, 2.5vw, 28px)",
-        minHeight: "clamp(160px, 18vh, 220px)",
-        borderColor: borderColor,
+        borderColor: `${accentColor}40`,
+        boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
       }}
     >
-      {/* Glow accent on hover */}
+      {/* ── Category color top bar ── */}
       <div
-        className="absolute inset-0 rounded-2xl opacity-0 hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-        style={{ background: glowColor }}
+        className="w-full flex-shrink-0"
+        style={{ height: "4px", background: accentColor, opacity: 0.7 }}
       />
 
-      {/* Unavailable overlay */}
+      {/* ── Unavailable overlay ── */}
       {!game.available && (
-        <div className="absolute inset-0 rounded-2xl bg-white/95 z-10 flex items-center justify-center">
+        <div className="absolute inset-0 rounded-2xl bg-white/90 z-10 flex items-center justify-center backdrop-blur-sm">
           <span
-            className="text-gray-500 font-bold tracking-widest uppercase"
-            style={{ fontSize: "var(--text-xs)" }}
+            className="font-bold tracking-widest uppercase text-gray-400 border border-gray-200 rounded-full px-4 py-1"
+            style={{ fontSize: "clamp(10px, 1vw, 13px)" }}
           >
             Coming Soon
           </span>
         </div>
       )}
 
-      <div className="relative z-[1] flex flex-col h-full gap-3">
-        {/* Icon */}
-        <div
-          className="flex items-center justify-center rounded-xl shadow-sm"
-          style={{
-            width: "clamp(48px, 6vw, 72px)",
-            height: "clamp(48px, 6vw, 72px)",
-            fontSize: "clamp(28px, 3.5vw, 44px)",
-            background: glowColor,
-            border: `1px solid ${borderColor}`,
-          }}
+      {/* ── Card body ── */}
+      <div className="flex flex-col flex-1 min-h-0" style={{ padding: "clamp(10px, 1.5vw, 18px)" }}>
+
+        {/* Icon + title row */}
+        <div className="flex items-start gap-3 mb-2">
+          {/* Icon bubble */}
+          <div
+            className="flex-shrink-0 flex items-center justify-center rounded-xl"
+            style={{
+              width: "clamp(40px, 5vw, 56px)",
+              height: "clamp(40px, 5vw, 56px)",
+              fontSize: "clamp(22px, 2.8vw, 34px)",
+              background: accentBg,
+              border: `1.5px solid ${accentColor}35`,
+            }}
+          >
+            {game.icon}
+          </div>
+
+          {/* Title & subtitle */}
+          <div className="flex-1 min-w-0 flex flex-col justify-center">
+            <h3
+              className="font-black text-gray-800 leading-tight line-clamp-1"
+              style={{ fontSize: "clamp(12px, 1.3vw, 17px)" }}
+            >
+              {game.title}
+            </h3>
+            <p
+              className="font-semibold leading-tight mt-0.5 line-clamp-1"
+              style={{ fontSize: "clamp(10px, 0.95vw, 13px)", color: accentColor }}
+            >
+              {game.subtitle}
+            </p>
+          </div>
+        </div>
+
+        {/* Description */}
+        <p
+          className="text-gray-500 leading-snug flex-1 min-h-0 line-clamp-2"
+          style={{ fontSize: "clamp(9px, 0.85vw, 12px)" }}
         >
-          {game.icon}
-        </div>
+          {game.description}
+        </p>
 
-        {/* Title & subtitle */}
-        <div className="flex flex-col gap-1 flex-1">
-          <h3
-            className="font-bold text-gray-800 leading-tight"
-            style={{ fontSize: "var(--text-sm)" }}
+        {/* Footer: players + duration */}
+        <div className="flex items-center justify-between mt-2 flex-shrink-0">
+          <div
+            className="flex items-center gap-1 rounded-full font-bold"
+            style={{
+              background: `${accentColor}15`,
+              color: accentColor,
+              padding: "clamp(2px, 0.4vh, 4px) clamp(6px, 0.8vw, 10px)",
+              fontSize: "clamp(9px, 0.8vw, 11px)",
+            }}
           >
-            {game.title}
-          </h3>
-          <p
-            className="text-gray-500 leading-snug font-medium"
-            style={{ fontSize: "var(--text-xs)" }}
+            👥 {game.players}P
+          </div>
+          <span
+            className="text-gray-400 font-bold"
+            style={{ fontSize: "clamp(9px, 0.8vw, 11px)" }}
           >
-            {game.subtitle}
-          </p>
-        </div>
-
-        {/* Footer: duration */}
-        <div className="flex items-center justify-end gap-2 mt-auto">
-          <span className="text-gray-400 font-bold" style={{ fontSize: "clamp(10px, 1vw, 14px)" }}>
             ⏱ {game.duration}
           </span>
         </div>

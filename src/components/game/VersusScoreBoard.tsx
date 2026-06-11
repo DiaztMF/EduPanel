@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 
 interface VersusScoreBoardProps {
   p1Score: number;
@@ -19,12 +19,13 @@ function ScoreDisplay({
   player: 1 | 2;
   label: string;
 }) {
-  const prevScore = useRef(score);
-  const justScored = score > prevScore.current;
+  const [prevScore, setPrevScore] = useState(score);
+  const [justScored, setJustScored] = useState(false);
 
-  useEffect(() => {
-    prevScore.current = score;
-  });
+  if (score !== prevScore) {
+    setPrevScore(score);
+    setJustScored(score > prevScore);
+  }
 
   const color = player === 1 ? "#6c8eff" : "#ff6b6b";
   const dimColor = player === 1 ? "rgba(108,142,255,0.12)" : "rgba(255,107,107,0.12)";

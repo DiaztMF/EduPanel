@@ -2,10 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Link from "next/link";
 import { usePipetteStore } from "@/store/usePipetteStore";
 import { VictoryResultModal } from "@/components/game/VictoryResultModal";
-import { GlobalTimer } from "@/components/game/GlobalTimer";
+import { GameHeader } from "@/components/game/GameHeader";
 
 const GAME_DURATION = 60;
 
@@ -189,44 +188,23 @@ export default function MathPipetteDuelPage() {
     setPhase("countdown"); setCountdown(3); setP1Score(0); setP2Score(0); setWinner(null); reset();
   };
 
-  const isFullscreen = () => {
-    if (typeof window !== "undefined" && document.fullscreenElement) {
-      document.exitFullscreen();
-    } else if (typeof window !== "undefined") {
-      document.documentElement.requestFullscreen().catch(() => { });
-    }
-  };
-
   return (
-    <div className="w-full h-full flex flex-col items-center bg-[#e0f2fe] relative overflow-hidden text-gray-900 font-sans">
+    <div className="w-full h-full flex flex-col bg-[#e0f2fe] relative overflow-hidden text-gray-900 font-sans">
 
+      {/* ── SHARED GAME HEADER ── */}
+      <GameHeader
+        title="Duel Pipet Matematika"
+        subtitle="Math Pipette Duel"
+        timerDuration={GAME_DURATION}
+        isTimerRunning={phase === "playing"}
+        onTimerComplete={() => finishGame()}
+      />
 
+      {/* ── MAIN CONTENT ── */}
+      <div className="flex-1 w-full flex items-center justify-between min-h-0" style={{ padding: "clamp(12px, 2vh, 24px) clamp(24px, 4vw, 80px) clamp(16px, 2.5vh, 32px)" }}>
 
-      {/* TOP HEADER */}
-      <div className="w-full flex items-center justify-between px-6 py-4 shadow-sm bg-[#e0f2fe] z-10 flex-shrink-0">
-        <div className="w-32 flex justify-start"></div>
-        <div className="flex-1 flex justify-center items-center">
-          <div className="font-bold text-[#0ea5e9] tracking-wide" style={{ fontSize: "clamp(20px, 2vw, 32px)" }}>
-             Duel Pipet Matematika
-          </div>
-        </div>
-        <div className="w-32 flex justify-end">
-           <button onPointerDown={isFullscreen} className="bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 font-bold px-4 py-2 rounded-lg shadow-sm transition-colors">
-             🖥️
-           </button>
-        </div>
-      </div>
-
-      {/* TIMER */}
-      <div className="w-full flex justify-center z-20 mt-4 mb-2">
-        <GlobalTimer duration={GAME_DURATION} isRunning={phase === "playing"} onComplete={() => finishGame()} />
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 w-full flex items-center justify-between z-10" style={{ padding: "clamp(20px, 3vh, 60px) clamp(32px, 6vw, 120px) clamp(60px, 8vh, 120px)" }}>
-
-        {/* Left P1 Panel */}
-        <div className="flex flex-col items-center z-10 flex-shrink-0 h-full justify-center">
+        {/* Left P1 Panel + Score */}
+        <div className="flex flex-col items-center z-10 flex-shrink-0 gap-3">
           <NumpadPanel
             player={1}
             question={p1Question.problem}
@@ -234,16 +212,21 @@ export default function MathPipetteDuelPage() {
             feedback={p1LastResult}
             onKirim={(val) => handleAnswer(1, val)}
           />
-          <div className="text-gray-800 font-bold mt-6 tracking-wide" style={{ fontSize: "clamp(20px, 2vw, 32px)" }}>Skor: {p1Score}</div>
+          <div
+            className="bg-white border border-sky-200 rounded-xl font-bold text-center shadow-sm"
+            style={{ padding: "clamp(6px, 1vh, 10px) clamp(16px, 2vw, 28px)", fontSize: "clamp(14px, 1.5vw, 22px)", color: "#1e3a8a" }}
+          >
+            Skor: {p1Score}
+          </div>
         </div>
 
         {/* Center Pipettes */}
-        <div className="flex-1 flex justify-center items-end relative z-10 mx-8 h-full">
+        <div className="flex-1 flex justify-center items-end relative z-10 mx-6 h-full min-w-0">
           <PipetteTube level={p1Level} player={1} />
 
           {/* VS Badge */}
-          <div className="flex flex-col items-center justify-center mx-8 mb-12">
-            <div className="bg-white border border-gray-300 rounded-2xl p-4 flex flex-col items-center justify-center shadow-md" style={{ padding: "clamp(10px, 1.5vh, 20px) clamp(16px, 2vw, 32px)" }}>
+          <div className="flex flex-col items-center justify-center mx-6 mb-12">
+            <div className="bg-white border border-gray-300 rounded-2xl flex flex-col items-center justify-center shadow-md" style={{ padding: "clamp(10px, 1.5vh, 20px) clamp(16px, 2vw, 32px)" }}>
               <span className="text-[#1f2937] font-black italic" style={{ fontSize: "clamp(32px, 4vw, 64px)" }}>VS</span>
             </div>
             <div className="mt-4 bg-gray-800 rounded-full text-white font-bold shadow-md" style={{ padding: "clamp(6px, 1vh, 10px) clamp(16px, 2vw, 32px)", fontSize: "clamp(14px, 1.5vw, 20px)" }}>
@@ -254,8 +237,8 @@ export default function MathPipetteDuelPage() {
           <PipetteTube level={p2Level} player={2} />
         </div>
 
-        {/* Right P2 Panel */}
-        <div className="flex flex-col items-center z-10 flex-shrink-0 h-full justify-center">
+        {/* Right P2 Panel + Score */}
+        <div className="flex flex-col items-center z-10 flex-shrink-0 gap-3">
           <NumpadPanel
             player={2}
             question={p2Question.problem}
@@ -263,18 +246,16 @@ export default function MathPipetteDuelPage() {
             feedback={p2LastResult}
             onKirim={(val) => handleAnswer(2, val)}
           />
-          <div className="text-gray-800 font-bold mt-6 tracking-wide" style={{ fontSize: "clamp(20px, 2vw, 32px)" }}>Skor: {p2Score}</div>
+          <div
+            className="bg-white border border-red-200 rounded-xl font-bold text-center shadow-sm"
+            style={{ padding: "clamp(6px, 1vh, 10px) clamp(16px, 2vw, 28px)", fontSize: "clamp(14px, 1.5vw, 22px)", color: "#7f1d1d" }}
+          >
+            Skor: {p2Score}
+          </div>
         </div>
       </div>
 
-      {/* Bottom Nav */}
-      <div className="absolute bottom-0 left-0 w-full flex justify-center z-20 pointer-events-none" style={{ paddingBottom: "clamp(20px, 3vh, 40px)" }}>
-        <Link href="/" className="pointer-events-auto bg-white hover:bg-gray-100 text-gray-700 font-bold px-8 py-3 rounded-2xl shadow-lg border border-gray-200 transition-colors flex items-center justify-center" style={{ textDecoration: "none", fontSize: "clamp(18px, 1.5vw, 24px)" }}>
-          ← Keluar
-        </Link>
-      </div>
-
-      {/* COUNTDOWN OVERLAY */}
+      {/* ── COUNTDOWN OVERLAY ── */}
       <AnimatePresence>
         {phase === "countdown" && (
           <motion.div
@@ -298,13 +279,7 @@ export default function MathPipetteDuelPage() {
         )}
       </AnimatePresence>
 
-      {/* BOTTOM MENU BUTTON */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-30">
-        <Link href="/" className="bg-white hover:bg-gray-50 border-2 border-[#bae6fd] text-gray-700 font-bold px-8 py-3 rounded-full shadow-lg transition-all flex items-center gap-2" style={{ textDecoration: "none", fontSize: "clamp(14px, 1.5vw, 20px)" }}>
-          ← Menu Utama
-        </Link>
-      </div>
-
+      {/* ── VICTORY MODAL ── */}
       <VictoryResultModal isOpen={phase === "finished"} winner={winner} p1Score={p1Level} p2Score={p2Level} p1Label="Tim Biru (Level)" p2Label="Tim Merah (Level)" onRematch={handleRematch} />
     </div>
   );

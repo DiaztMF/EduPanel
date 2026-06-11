@@ -1,0 +1,186 @@
+@import "tailwindcss";
+
+/* ─── CSS Custom Properties ─── */
+:root {
+  /* Color Palette */
+  --color-bg: #08090e;
+  --color-bg-card: rgba(255, 255, 255, 0.04);
+  --color-bg-card-hover: rgba(255, 255, 255, 0.07);
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-hover: rgba(255, 255, 255, 0.16);
+
+  /* Player Colors */
+  --color-p1: #6c8eff;
+  --color-p1-dim: rgba(108, 142, 255, 0.15);
+  --color-p1-glow: rgba(108, 142, 255, 0.4);
+  --color-p2: #ff6b6b;
+  --color-p2-dim: rgba(255, 107, 107, 0.15);
+  --color-p2-glow: rgba(255, 107, 107, 0.4);
+
+  /* Accent Colors */
+  --color-accent-blue: #6c8eff;
+  --color-accent-red: #ff6b6b;
+  --color-accent-purple: #a78bff;
+  --color-accent-mint: #4adeab;
+  --color-accent-orange: #ffaa5e;
+
+  /* Fluid Typography — readable from back of classroom */
+  --text-xs: clamp(0.875rem, 1.2vw, 1rem);
+  --text-sm: clamp(1rem, 1.5vw, 1.25rem);
+  --text-base: clamp(1.125rem, 1.8vw, 1.5rem);
+  --text-lg: clamp(1.25rem, 2.2vw, 2rem);
+  --text-xl: clamp(1.5rem, 3vw, 2.5rem);
+  --text-2xl: clamp(2rem, 4vw, 3.5rem);
+  --text-3xl: clamp(2.5rem, 5.5vw, 5rem);
+  --text-game-score: clamp(3rem, 7vw, 7rem);
+
+  /* Touch Targets */
+  --touch-sm: 48px;
+  --touch-md: 64px;
+  --touch-lg: 80px;
+  --touch-xl: 96px;
+}
+
+/* ─── Global Reset & Base ─── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family: "Outfit", "Space Grotesk", system-ui, sans-serif;
+  background-color: var(--color-bg);
+  color: white;
+  /* Prevent text selection during gameplay */
+  -webkit-user-select: none;
+  user-select: none;
+  /* Remove long-press context menu on touch devices */
+  -webkit-touch-callout: none;
+  /* Optimized touch */
+  touch-action: manipulation;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--color-bg);
+}
+
+/* Scrollable areas explicitly */
+.scrollable {
+  overflow: auto;
+  touch-action: pan-y;
+}
+
+/* ─── 16:9 Viewport Container ─── */
+.viewport-container {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ─── Glassmorphism Card ─── */
+.glass-card {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 16px;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.glass-card:active {
+  background: var(--color-bg-card-hover);
+  border-color: var(--color-border-hover);
+}
+
+/* ─── Glow Effects ─── */
+.glow-p1 {
+  box-shadow: 0 0 24px var(--color-p1-glow);
+}
+.glow-p2 {
+  box-shadow: 0 0 24px var(--color-p2-glow);
+}
+.glow-accent {
+  box-shadow: 0 0 32px rgba(167, 139, 255, 0.35);
+}
+
+/* ─── Touch Button Base ─── */
+.touch-btn {
+  min-height: var(--touch-lg);
+  min-width: var(--touch-lg);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  border-radius: 12px;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: var(--text-base);
+  transition: transform 0.1s ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.touch-btn:active {
+  transform: scale(0.95);
+}
+
+/* ─── Player Zone Base ─── */
+.player-zone-p1 {
+  background: linear-gradient(135deg, rgba(108, 142, 255, 0.05) 0%, transparent 60%);
+  border-right: 1px solid rgba(108, 142, 255, 0.2);
+}
+
+.player-zone-p2 {
+  background: linear-gradient(225deg, rgba(255, 107, 107, 0.05) 0%, transparent 60%);
+  border-left: 1px solid rgba(255, 107, 107, 0.2);
+}
+
+/* ─── Noise Texture Overlay ─── */
+.bg-noise::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─── Animated Gradient Background ─── */
+.bg-animated-gradient {
+  background: radial-gradient(ellipse at 20% 50%, rgba(108, 142, 255, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(167, 139, 255, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 60% 80%, rgba(74, 222, 171, 0.04) 0%, transparent 50%),
+    var(--color-bg);
+}
+
+/* ─── Typography Utilities ─── */
+.text-fluid-xs { font-size: var(--text-xs); }
+.text-fluid-sm { font-size: var(--text-sm); }
+.text-fluid-base { font-size: var(--text-base); }
+.text-fluid-lg { font-size: var(--text-lg); }
+.text-fluid-xl { font-size: var(--text-xl); }
+.text-fluid-2xl { font-size: var(--text-2xl); }
+.text-fluid-3xl { font-size: var(--text-3xl); }
+.text-game-score { font-size: var(--text-game-score); }
+
+/* ─── Category Badge Colors ─── */
+.badge-cat-a { background: rgba(255, 170, 94, 0.15); color: #ffaa5e; border: 1px solid rgba(255, 170, 94, 0.3); }
+.badge-cat-b { background: rgba(74, 222, 171, 0.15); color: #4adeab; border: 1px solid rgba(74, 222, 171, 0.3); }
+.badge-cat-c { background: rgba(167, 139, 255, 0.15); color: #a78bff; border: 1px solid rgba(167, 139, 255, 0.3); }
+
+/* ─── Scrollbar Styling ─── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 2px; }

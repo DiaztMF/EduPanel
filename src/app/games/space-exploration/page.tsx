@@ -96,19 +96,19 @@ export default function SpaceExplorationPage() {
       {/* ── MAIN 3-COLUMN LAYOUT ── */}
       <div
         className="flex-1 w-full flex min-h-0"
-        style={{ gap: "clamp(8px,1.2vw,16px)", padding: "clamp(6px,1vh,12px) clamp(16px,3vw,48px) clamp(8px,1.2vh,14px)" }}
+        style={{ gap: "clamp(12px,1.6vw,22px)", padding: "clamp(8px,1.2vh,16px) clamp(20px,4vw,60px) clamp(12px,2vh,24px)" }}
       >
         {/* LEFT: Planet list */}
         <div
           className="flex flex-col bg-white rounded-2xl shadow-lg border-2 overflow-hidden h-full flex-shrink-0"
           style={{ borderColor: "#1e3a8a", width: "clamp(140px,17vw,250px)" }}
         >
-          <div className="flex items-center justify-between text-white px-4 shadow-inner flex-shrink-0 bg-[#1e1b4b]"
-            style={{ paddingBlock: "clamp(8px,1.2vh,14px)" }}>
-            <h2 className="font-bold tracking-widest" style={{ fontSize: "clamp(10px,0.95vw,15px)" }}>PLANET</h2>
-            <div className="font-black bg-white/20 px-2 py-0.5 rounded-lg" style={{ fontSize: "clamp(10px,0.9vw,13px)" }}>{correctCount}/{totalMoons}</div>
+          <div className="flex items-center justify-between text-white shadow-inner flex-shrink-0 bg-[#1e1b4b]"
+            style={{ padding: "clamp(10px,1.5vh,18px) clamp(14px,2vw,24px)" }}>
+            <h2 className="font-bold tracking-widest" style={{ fontSize: "clamp(11px,1.1vw,17px)" }}>PLANET</h2>
+            <div className="font-black bg-white/20 px-3 py-1 rounded-lg" style={{ fontSize: "clamp(11px,1vw,15px)" }}>{correctCount}/{totalMoons}</div>
           </div>
-          <div className="flex-1 flex flex-col min-h-0 overflow-y-auto p-2" style={{ gap: "clamp(4px,0.6vh,8px)", background: "#f8fafc" }}>
+          <div className="flex-1 flex flex-col min-h-0 overflow-y-auto" style={{ padding: "clamp(8px,1.2vh,14px)", gap: "clamp(6px,0.8vh,12px)", background: "#f8fafc" }}>
             {SOLAR_SYSTEM.map((p) => {
               const placed_ = ALL_MOONS.filter((m) => m.planet === p.id && correct.has(m.id));
               const isWrong = wrongGuess === p.id;
@@ -118,8 +118,8 @@ export default function SpaceExplorationPage() {
                   onPointerDown={(e) => { e.stopPropagation(); handlePlanetGuess(p.id); }}
                   animate={isWrong ? { x: [-4, 4, -4, 4, 0], background: "#fee2e2", borderColor: "#ef4444" } : { x: 0, background: "#ffffff", borderColor: "#e5e7eb" }}
                   transition={{ duration: 0.4 }}
-                  className="flex items-center gap-2 rounded-xl touch-btn text-left shadow-sm border-2 flex-shrink-0"
-                  style={{ padding: "clamp(5px,0.7vh,9px) clamp(6px,0.8vw,12px)", touchAction: "manipulation" }}
+                  className="flex items-center gap-2 rounded-xl text-left shadow-sm border-2 flex-shrink-0 active:translate-y-0.5 transition-all"
+                  style={{ padding: "clamp(6px,0.8vh,12px) clamp(8px,1vw,16px)", touchAction: "manipulation" }}
                 >
                   <span style={{ fontSize: "clamp(14px,2vw,26px)", flexShrink: 0 }}>{p.emoji}</span>
                   <div className="flex-1 min-w-0">
@@ -209,7 +209,7 @@ export default function SpaceExplorationPage() {
             return (
               <motion.button
                 key={planet.id}
-                className="absolute flex flex-col items-center touch-btn group"
+                className="absolute flex flex-col items-center group"
                 style={{ left: `${pxPct}%`, top: `${pyPct}%`, transform: "translate(-50%,-50%)", touchAction: "manipulation", zIndex: 10 }}
                 animate={isWrong ? { x: [-8, 8, -8, 8, 0], scale: 1.1 } : { x: 0, scale: 1 }}
                 whileHover={{ scale: 1.2 }}
@@ -241,12 +241,12 @@ export default function SpaceExplorationPage() {
         {/* RIGHT: Active Question Panel */}
         <div
           className="flex flex-col bg-white rounded-2xl shadow-lg border-2 overflow-hidden h-full flex-shrink-0"
-          style={{ borderColor: "#b91c1c", width: "clamp(160px,20vw,300px)" }}
+          style={{ borderColor: "#7f1d1d", width: "clamp(160px,20vw,300px)" }}
         >
-          <div className="flex items-center justify-between text-white px-4 shadow-inner flex-shrink-0 bg-[#7f1d1d]"
-            style={{ paddingBlock: "clamp(8px,1.2vh,14px)" }}>
-            <h2 className="font-bold tracking-widest" style={{ fontSize: "clamp(10px,0.95vw,15px)" }}>TEBAK BULAN</h2>
-            <div className="font-black bg-white/20 px-2 py-0.5 rounded-lg" style={{ fontSize: "clamp(10px,0.9vw,13px)" }}>{score} pts</div>
+          <div className="flex items-center justify-between text-white shadow-inner flex-shrink-0 bg-[#7f1d1d]"
+            style={{ padding: "clamp(10px,1.5vh,18px) clamp(14px,2vw,24px)" }}>
+            <h2 className="font-bold tracking-widest" style={{ fontSize: "clamp(11px,1.1vw,17px)" }}>TEBAK BULAN</h2>
+            <div className="font-black bg-white/20 px-3 py-1 rounded-lg" style={{ fontSize: "clamp(11px,1vw,15px)" }}>{score} pts</div>
           </div>
           
           <div className="flex-1 flex flex-col bg-[#f8fafc] p-4 relative justify-center items-center">
@@ -315,7 +315,7 @@ export default function SpaceExplorationPage() {
             </div>
             <motion.button
               onPointerDown={() => setPhase("playing")} whileTap={{ scale: 0.92 }}
-              className="touch-btn font-black border-2 border-b-4"
+              className="font-black border-2 border-b-4 active:translate-y-1 transition-all"
               style={{ background: "#3b82f6", borderColor: "#1d4ed8", color: "white", borderRadius: "16px", padding: "clamp(12px,1.8vh,22px) clamp(28px,4.5vw,58px)", fontSize: "clamp(14px,2vw,28px)", touchAction: "manipulation" }}
             >
               🚀 Mulai Penjelajahan

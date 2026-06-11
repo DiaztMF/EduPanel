@@ -26,17 +26,18 @@ function TeamPanel({
   onGuess: (cat: WasteCategory) => void;
   disabled: boolean;
 }) {
-  const color = player === 1 ? "#3b82f6" : "#ef4444";
-  const title = player === 1 ? "TIM BIRU" : "TIM MERAH";
+  const isP1 = player === 1;
+  const color = isP1 ? "#1e3a8a" : "#7f1d1d";
+  const headerColor = isP1 ? "#1e1b4b" : "#7f1d1d";
+  const title = isP1 ? "TIM BIRU" : "TIM MERAH";
 
   return (
-    <div className="flex flex-col bg-white rounded-3xl shadow-lg border-4 overflow-hidden h-full" style={{ borderColor: color }}>
-      <div className="flex items-center justify-between text-white px-6 shadow-inner flex-shrink-0" style={{ backgroundColor: color, paddingBlock: "clamp(8px, 1.2vh, 16px)" }}>
+    <div className="flex flex-col bg-white rounded-2xl shadow-lg border-2 overflow-hidden h-full" style={{ borderColor: color }}>
+      <div className="flex items-center justify-center text-white shadow-inner flex-shrink-0" style={{ backgroundColor: headerColor, paddingBlock: "clamp(10px, 1.5vh, 20px)" }}>
         <h2 className="font-bold tracking-widest" style={{ fontSize: "clamp(14px, 1.6vw, 22px)" }}>{title}</h2>
-        <div className="font-black bg-white/20 px-3 py-1 rounded-lg" style={{ fontSize: "clamp(13px, 1.3vw, 18px)" }}>{score} pts</div>
       </div>
 
-      <div className="flex-1 flex flex-col min-h-0 relative" style={{ padding: "clamp(10px, 1.5vh, 18px)", background: "#f8fafc", gap: "clamp(8px, 1.2vh, 14px)" }}>
+      <div className="flex-1 flex flex-col min-h-0 relative" style={{ padding: "clamp(12px, 1.8vh, 22px)", background: "#f8fafc", gap: "clamp(10px, 1.4vh, 18px)" }}>
         <AnimatePresence>
           {lastResult && (
             <motion.div
@@ -59,8 +60,8 @@ function TeamPanel({
                 key={`${cat}-${idx}`}
                 onPointerDown={(e) => { e.stopPropagation(); onGuess(cat); }}
                 disabled={disabled}
-                className="touch-btn flex-1 w-full bg-white border-2 rounded-2xl shadow-sm flex items-center justify-center gap-4 active:scale-95 transition-transform"
-                style={{ borderColor: cfg.color, minHeight: "clamp(48px, 6vh, 80px)", opacity: disabled ? 0.6 : 1 }}
+                className="flex-1 w-full bg-white border-2 rounded-2xl shadow-sm flex items-center justify-center gap-4 active:scale-95 active:translate-y-0.5 transition-all"
+                style={{ borderColor: cfg.color, minHeight: "clamp(52px, 7vh, 90px)", opacity: disabled ? 0.6 : 1, touchAction: "manipulation" }}
               >
                 <span style={{ fontSize: "clamp(28px, 3vw, 44px)" }}>{cfg.emoji}</span>
                 <span className="font-bold" style={{ fontSize: "clamp(16px, 1.8vw, 28px)", color: cfg.color }}>{cfg.label}</span>
@@ -157,16 +158,16 @@ export default function WasteSortingRacePage() {
       />
 
       {/* CENTER CLUE CARD */}
-      <div className="w-full z-10 flex-shrink-0" style={{ padding: "clamp(8px, 1.2vh, 14px) clamp(20px, 4vw, 60px)" }}>
+      <div className="w-full z-10 flex-shrink-0" style={{ padding: "clamp(10px, 1.6vh, 20px) clamp(20px, 4vw, 60px)" }}>
          <AnimatePresence mode="wait">
            <motion.div 
              key={currentWaste.id}
              initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }}
-             className="bg-white rounded-2xl shadow-md border border-gray-200 text-center w-full flex flex-col items-center justify-center gap-2"
-             style={{ minHeight: "clamp(90px, 13vh, 170px)", padding: "clamp(10px, 1.5vh, 20px)" }}
+             className="bg-white rounded-2xl shadow-md border border-gray-200 text-center w-full flex flex-col items-center justify-center"
+             style={{ minHeight: "clamp(100px, 15vh, 190px)", padding: "clamp(12px, 1.8vh, 24px)" }}
            >
-             <span style={{ fontSize: "clamp(40px, 5vw, 72px)" }}>{currentWaste.emoji}</span>
-             <h2 className="font-black text-[#1f2937] leading-tight" style={{ fontSize: "clamp(20px, 2.2vw, 36px)" }}>
+             <span style={{ fontSize: "clamp(48px, 6vw, 84px)", lineHeight: 1 }}>{currentWaste.emoji}</span>
+             <h2 className="font-black text-[#1f2937] mt-1 leading-tight" style={{ fontSize: "clamp(22px, 2.5vw, 38px)" }}>
                {currentWaste.name}
              </h2>
            </motion.div>
@@ -174,7 +175,7 @@ export default function WasteSortingRacePage() {
       </div>
 
       {/* TEAM PANELS */}
-      <div className="flex-1 w-full z-10 flex gap-8 min-h-0" style={{ padding: "0 clamp(20px, 4vw, 60px) clamp(8px, 1.2vh, 14px)" }}>
+      <div className="flex-1 w-full z-10 flex gap-8 min-h-0" style={{ padding: "clamp(4px, 0.8vh, 10px) clamp(20px, 4vw, 60px) clamp(12px, 2vh, 24px)" }}>
         <div className="flex-1 min-w-0">
           <TeamPanel 
             player={2} 
@@ -202,7 +203,7 @@ export default function WasteSortingRacePage() {
         {phase === "countdown" && (
           <motion.div
             className="absolute inset-0 z-40 flex flex-col items-center justify-center"
-            style={{ background: "rgba(224,242,254,0.95)" }}
+            style={{ background: "rgba(224,242,254,0.95)", backdropFilter: "blur(12px)" }}
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
           >
             <p className="text-gray-600 font-bold mb-6" style={{ fontSize: "clamp(32px, 3vw, 56px)" }}>Bersiap...</p>

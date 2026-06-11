@@ -10,7 +10,7 @@ import { CATEGORY_LABEL } from "@/data/word-challenges";
 const GAME_DURATION = 60;
 type Phase = "countdown" | "playing" | "finished";
 
-const SHIP_STAGES = ["⛵", "🚢", "🛥️", "🚤", "⛵", "💥", "🌊"];
+const SHIP_STAGES = ["⛵", "🚢", "🛥️", "🚤", "🔥", "💥", "🌊"];
 
 function ShipDisplay({ errors, player }: { errors: number; player: 1 | 2 }) {
   const pct = Math.min(errors / MAX_ERRORS, 1);
@@ -18,7 +18,7 @@ function ShipDisplay({ errors, player }: { errors: number; player: 1 | 2 }) {
   const stage = Math.min(errors, SHIP_STAGES.length - 1);
 
   return (
-    <div className="flex flex-col items-center gap-1">
+    <div className="flex flex-col items-center gap-2">
       <motion.div
         key={errors}
         animate={{ rotate: errors > 0 ? [-3, 3, -2, 0] : 0, scale: errors >= MAX_ERRORS ? [1, 1.3, 0.8] : 1 }}
@@ -46,7 +46,7 @@ function MultipleChoiceOptions({
   options: string[]; answer: string; guessed: Set<string>; onGuess: (opt: string) => void; disabled: boolean;
 }) {
   return (
-    <div className="flex flex-col w-full flex-1 min-h-0" style={{ gap: "clamp(6px, 1vh, 12px)" }}>
+    <div className="flex flex-col w-full flex-1 min-h-0" style={{ gap: "clamp(8px, 1.2vh, 14px)" }}>
       {options.map((opt) => {
         const isGuessed = guessed.has(opt);
         const isCorrect = opt === answer;
@@ -102,9 +102,9 @@ function TeamPanel({ player, errors, guessed, options, answer, score, onGuess, d
   return (
     <div className="flex flex-col bg-white rounded-2xl shadow-lg border-2 overflow-hidden w-full h-full" style={{ borderColor: borderColor }}>
       {/* Header bar */}
-      <div className="flex items-center justify-between text-white px-6 shadow-inner flex-shrink-0" style={{ backgroundColor: headerColor, paddingBlock: "clamp(8px, 1.2vh, 16px)" }}>
+      <div className="flex items-center justify-between text-white shadow-inner flex-shrink-0" style={{ backgroundColor: headerColor, padding: "clamp(12px, 1.5vh, 20px) clamp(20px, 3vw, 32px)" }}>
         <h2 className="font-bold tracking-widest" style={{ fontSize: "clamp(14px, 1.4vw, 22px)" }}>{teamName}</h2>
-        <div className="font-black bg-white/20 px-3 py-1 rounded-lg" style={{ fontSize: "clamp(13px, 1.3vw, 18px)" }}>{score} pts</div>
+        <div className="font-black bg-white/20 rounded-lg" style={{ padding: "clamp(6px, 0.8vh, 10px) clamp(12px, 1.5vw, 20px)", fontSize: "clamp(13px, 1.3vw, 18px)" }}>{score} pts</div>
       </div>
 
       {/* Content: ship + options fills all remaining height */}
@@ -235,7 +235,7 @@ export default function WordPinisiDuelPage() {
 
 
       {/* CENTER CLUE CARD */}
-      <div className="w-full z-10 flex-shrink-0" style={{ padding: "clamp(8px, 1.2vh, 14px) clamp(20px, 4vw, 60px)" }}>
+      <div className="w-full z-10 flex-shrink-0" style={{ padding: "clamp(12px, 1.8vh, 22px) clamp(20px, 4vw, 60px)" }}>
          <AnimatePresence mode="wait">
            <motion.div 
              key={currentWord.id}
@@ -251,7 +251,7 @@ export default function WordPinisiDuelPage() {
       </div>
 
       {/* TEAM PANELS */}
-      <div className="flex-1 w-full z-10 flex gap-8 min-h-0" style={{ padding: "0 clamp(20px, 4vw, 60px) clamp(8px, 1.2vh, 14px)" }}>
+      <div className="flex-1 w-full z-10 flex gap-8 min-h-0" style={{ padding: "0 clamp(20px, 4vw, 60px) clamp(12px, 1.8vh, 22px)" }}>
         <div className="flex-1 min-w-0">
           <TeamPanel 
             player={2} 

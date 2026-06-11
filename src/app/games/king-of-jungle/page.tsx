@@ -48,8 +48,8 @@ function Tile({ tile, p1Here, p2Here, highlighted }: {
       )}
       {/* Player tokens */}
       <div className="absolute -top-2 -right-2 flex gap-1 z-10">
-        {p1Here && <div className="rounded-full shadow-md" style={{ width: "clamp(12px,1.5vw,20px)", height: "clamp(12px,1.5vw,20px)", background: "#3b82f6", border: "2px solid white" }} />}
-        {p2Here && <div className="rounded-full shadow-md" style={{ width: "clamp(12px,1.5vw,20px)", height: "clamp(12px,1.5vw,20px)", background: "#ef4444", border: "2px solid white" }} />}
+        {p1Here && <div className="rounded-full shadow-md" style={{ width: "clamp(12px,1.5vw,20px)", height: "clamp(12px,1.5vw,20px)", background: "#1e3a8a", border: "2px solid white" }} />}
+        {p2Here && <div className="rounded-full shadow-md" style={{ width: "clamp(12px,1.5vw,20px)", height: "clamp(12px,1.5vw,20px)", background: "#7f1d1d", border: "2px solid white" }} />}
       </div>
     </motion.div>
   );
@@ -209,49 +209,47 @@ export default function KingOfJunglePage() {
         subtitle="Board game hutan 30 petak"
       />
 
-      {/* SCOREBOARD (PROGRESS BARS IN A BEIGE BOARD) */}
-      <div className="w-full max-w-6xl px-8 py-4 z-10 flex flex-col items-center">
-         <div className="w-full bg-[#ffedd5] border border-[#fdba74] shadow-sm rounded-2xl p-4 flex flex-col gap-3 relative">
+      {/* SCOREBOARD */}
+      <div className="w-full max-w-6xl z-10 flex-shrink-0" style={{ padding: "clamp(12px, 2vh, 24px) clamp(20px, 4vw, 60px) 0" }}>
+         <div className="w-full bg-white border-2 border-gray-200 shadow-lg rounded-2xl flex flex-col" style={{ padding: "clamp(12px, 1.5vh, 20px)", gap: "clamp(8px, 1vh, 14px)" }}>
            
-           {/* Removed Turn Indicator from here */}
+            {/* Tim Biru (P1) */}
+            <div className="flex items-center gap-4 w-full">
+               <div className="w-5 h-5 rounded-full flex-shrink-0" style={{ background: "#1e3a8a" }}></div>
+               <div className="w-24 font-bold tracking-wider flex-shrink-0" style={{ fontSize: "clamp(13px, 1.3vw, 18px)", color: "#1e3a8a" }}>TIM BIRU</div>
+               <div className="flex-1 h-6 bg-[#e0f2fe] rounded-full border overflow-hidden relative shadow-inner" style={{ borderColor: "#b9ddf5" }}>
+                  <motion.div className="h-full rounded-full" style={{ background: "linear-gradient(90deg, #1e3a8a, #3b82f6)" }} animate={{ width: `${p1Pct}%` }} transition={{ type: "spring" }} />
+               </div>
+               <div className="font-bold text-center rounded-xl border-2 shadow-sm flex flex-col" style={{ padding: "clamp(4px, 0.6vh, 8px) clamp(10px, 1.2vw, 20px)", fontSize: "clamp(11px, 1.1vw, 15px)", color: "#1e3a8a", borderColor: "#1e3a8a", background: "#eff6ff" }}>
+                  <span>{p1Score} pts</span>
+                  <span className="font-bold" style={{ fontSize: "clamp(9px, 0.8vw, 11px)", color: "#60a5fa" }}>Petak {p1Pos}</span>
+               </div>
+            </div>
 
-           {/* Tim Merah (P2) */}
-           <div className="flex items-center gap-4 w-full mt-2">
-              <div className="w-6 h-6 rounded-full bg-[#ef4444] shadow-inner flex-shrink-0 border-2 border-white"></div>
-              <div className="w-20 font-bold text-[#b91c1c] tracking-wider" style={{ fontSize: "clamp(12px, 1.5vw, 18px)" }}>MERAH</div>
-              <div className="flex-1 h-6 bg-[#fef3c7] rounded-full border-2 border-[#fcd34d] overflow-hidden relative shadow-inner">
-                 <motion.div className="h-full bg-gradient-to-r from-[#fcd34d] to-[#fbbf24]" animate={{ width: `${p2Pct}%` }} transition={{ type: "spring" }} />
-              </div>
-              <div className="w-24 bg-white font-bold text-center py-1 rounded-lg border shadow-sm text-gray-700 flex flex-col" style={{ lineHeight: 1.1 }}>
-                 <span>{p2Score} pts</span>
-                 <span className="text-[10px] text-gray-400">Petak {p2Pos}</span>
-              </div>
-           </div>
-
-           {/* Tim Biru (P1) */}
-           <div className="flex items-center gap-4 w-full">
-              <div className="w-6 h-6 rounded-full bg-[#3b82f6] shadow-inner flex-shrink-0 border-2 border-white"></div>
-              <div className="w-20 font-bold text-[#1d4ed8] tracking-wider" style={{ fontSize: "clamp(12px, 1.5vw, 18px)" }}>BIRU</div>
-              <div className="flex-1 h-6 bg-[#fef3c7] rounded-full border-2 border-[#fcd34d] overflow-hidden relative shadow-inner">
-                 <motion.div className="h-full bg-gradient-to-r from-[#fcd34d] to-[#fbbf24]" animate={{ width: `${p1Pct}%` }} transition={{ type: "spring" }} />
-              </div>
-              <div className="w-24 bg-white font-bold text-center py-1 rounded-lg border shadow-sm text-gray-700 flex flex-col" style={{ lineHeight: 1.1 }}>
-                 <span>{p1Score} pts</span>
-                 <span className="text-[10px] text-gray-400">Petak {p1Pos}</span>
-              </div>
-           </div>
+            {/* Tim Merah (P2) */}
+            <div className="flex items-center gap-4 w-full">
+               <div className="w-5 h-5 rounded-full flex-shrink-0" style={{ background: "#7f1d1d" }}></div>
+               <div className="w-24 font-bold tracking-wider flex-shrink-0" style={{ fontSize: "clamp(13px, 1.3vw, 18px)", color: "#7f1d1d" }}>TIM MERAH</div>
+               <div className="flex-1 h-6 bg-[#fef2f2] rounded-full border overflow-hidden relative shadow-inner" style={{ borderColor: "#f5c6c6" }}>
+                  <motion.div className="h-full rounded-full" style={{ background: "linear-gradient(90deg, #7f1d1d, #ef4444)" }} animate={{ width: `${p2Pct}%` }} transition={{ type: "spring" }} />
+               </div>
+               <div className="font-bold text-center rounded-xl border-2 shadow-sm flex flex-col" style={{ padding: "clamp(4px, 0.6vh, 8px) clamp(10px, 1.2vw, 20px)", fontSize: "clamp(11px, 1.1vw, 15px)", color: "#7f1d1d", borderColor: "#7f1d1d", background: "#fef2f2" }}>
+                  <span>{p2Score} pts</span>
+                  <span className="font-bold" style={{ fontSize: "clamp(9px, 0.8vw, 11px)", color: "#f87171" }}>Petak {p2Pos}</span>
+               </div>
+            </div>
 
          </div>
       </div>
 
       {/* MAIN: Board + Sidebar */}
-      <div className="flex-1 w-full max-w-7xl flex gap-6 min-h-0 px-8 pb-8">
+      <div className="flex-1 w-full max-w-7xl flex gap-6 min-h-0" style={{ padding: "clamp(4px,0.8vh,10px) clamp(20px,4vw,60px) clamp(12px,2vh,24px)" }}>
 
         {/* Board grid */}
-        <div className="flex-1 min-w-0 bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-4">
-          <div className="h-full grid" style={{ gridTemplateRows: "repeat(5,1fr)", gap: "clamp(6px,1vh,12px)" }}>
+        <div className="flex-1 min-w-0 bg-white rounded-2xl shadow-lg border-2 border-gray-200" style={{ padding: "clamp(12px,1.8vh,24px)" }}>
+          <div className="h-full grid" style={{ gridTemplateRows: "repeat(5,1fr)", gap: "clamp(8px,1.2vh,16px)" }}>
             {rows.map((row, ri) => (
-              <div key={ri} className="grid" style={{ gridTemplateColumns: `repeat(${tilesPerRow + 1},1fr)`, gap: "clamp(6px,1vw,12px)" }}>
+              <div key={ri} className="grid" style={{ gridTemplateColumns: `repeat(${tilesPerRow + 1},1fr)`, gap: "clamp(8px,1.2vw,16px)" }}>
                 {row.map((tile) => (
                   <Tile key={tile.id} tile={tile}
                     p1Here={p1Pos === tile.id} p2Here={p2Pos === tile.id}
@@ -263,14 +261,14 @@ export default function KingOfJunglePage() {
         </div>
 
         {/* Sidebar: Dice + actions */}
-        <div className="flex flex-col items-center justify-center gap-6 flex-shrink-0 bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-6" style={{ width: "clamp(200px,20vw,280px)" }}>
+        <div className="flex flex-col items-center justify-center gap-6 flex-shrink-0 bg-white rounded-2xl shadow-lg border-2 border-gray-200" style={{ width: "clamp(200px,20vw,280px)", padding: "clamp(14px,2vh,28px)" }}>
           <DiceDisplay value={diceValue} rolling={isRolling} />
 
           <motion.button
             onPointerDown={rollDice}
             whileTap={{ scale: 0.88 }}
             disabled={phase !== "rolling"}
-            className="touch-btn font-black w-full shadow-sm"
+            className="font-black w-full shadow-sm active:translate-y-1 transition-all"
             style={{
               background: phase === "rolling" ? "#10b981" : "#f3f4f6",
               color: phase === "rolling" ? "white" : "#9ca3af",
@@ -289,7 +287,7 @@ export default function KingOfJunglePage() {
           <div className="flex flex-col gap-2 w-full mt-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
             <h3 className="text-center font-bold text-gray-500 mb-2 text-sm uppercase tracking-wider">Keterangan</h3>
             {[
-              { emoji: "❓", color: "#3b82f6", label: "Kuis +10" },
+              { emoji: "❓", color: "#1e3a8a", label: "Kuis +10" },
               { emoji: "⭐", color: "#10b981", label: "Bonus Maju" },
               { emoji: "🌧️", color: "#ef4444", label: "Penalti Mundur" },
               { emoji: "💤", color: "#f59e0b", label: "Istirahat" },
@@ -317,8 +315,8 @@ export default function KingOfJunglePage() {
           <motion.div className="absolute inset-0 z-40 flex flex-col items-center justify-center gap-6"
             style={{ background: "rgba(224,242,254,0.95)", backdropFilter: "blur(12px)", padding: "clamp(20px,4vw,60px)" }}
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <div className="bg-white rounded-3xl shadow-xl border-4 w-full max-w-4xl text-center" style={{ borderColor: turn === 1 ? "#3b82f6" : "#ef4444", padding: "clamp(24px,4vh,48px)" }}>
-              <p className="font-bold mb-4 uppercase tracking-widest" style={{ color: turn === 1 ? "#3b82f6" : "#ef4444", fontSize: "clamp(12px,1.5vw,18px)" }}>
+            <div className="bg-white rounded-3xl shadow-xl border-4 w-full max-w-4xl text-center" style={{ borderColor: turn === 1 ? "#1e3a8a" : "#7f1d1d", padding: "clamp(24px,4vh,48px)" }}>
+              <p className="font-bold mb-4 uppercase tracking-widest" style={{ color: turn === 1 ? "#1e3a8a" : "#7f1d1d", fontSize: "clamp(12px,1.5vw,18px)" }}>
                 🌿 {currentQuestion.category} · {turn === 1 ? "TIM BIRU" : "TIM MERAH"}
               </p>
               <p className="font-black text-gray-800" style={{ fontSize: "clamp(20px,3.5vw,48px)", lineHeight: 1.2 }}>
@@ -333,7 +331,7 @@ export default function KingOfJunglePage() {
                   <motion.button key={i}
                     onPointerDown={() => handleAnswer(i)}
                     animate={{ background: flash === "correct" ? "#10b981" : "white", color: flash === "correct" ? "white" : "#1f2937" }}
-                    className="touch-btn font-bold shadow-md rounded-2xl"
+                    className="font-bold shadow-md rounded-2xl active:translate-y-1 transition-all"
                     style={{ minHeight: "clamp(64px, 10vh, 96px)", border: `4px solid ${flash === "correct" ? "#059669" : "#e5e7eb"}`, fontSize: "clamp(16px,2.5vw,32px)", touchAction: "manipulation" }}
                     disabled={questionResult !== null}
                   >
@@ -374,7 +372,7 @@ export default function KingOfJunglePage() {
               <p className="text-gray-400 font-bold mt-1" style={{ fontSize: "clamp(12px,1.2vw,16px)" }}>Giliran bergantian · Pertama tiba di FINISH menang!</p>
             </div>
             <motion.button onPointerDown={() => setPhase("rolling")} whileTap={{ scale: 0.92 }}
-              className="touch-btn font-black border-2 border-b-4"
+              className="font-black border-2 border-b-4 active:translate-y-1 transition-all"
               style={{ background: "#10b981", borderColor: "#059669", color: "white", borderRadius: "16px", padding: "clamp(14px,2vh,24px) clamp(32px,5vw,64px)", fontSize: "clamp(16px,2.2vw,30px)", touchAction: "manipulation" }}>
               🌿 Mulai Permainan!
             </motion.button>

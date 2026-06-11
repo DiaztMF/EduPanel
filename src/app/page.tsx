@@ -3,6 +3,21 @@
 import { motion } from "framer-motion";
 import { GameCard } from "@/components/game/GameCard";
 import type { GameConfig } from "@/components/game/GameCard";
+import {
+  Divide,
+  Brain,
+  FlaskConical,
+  Sailboat,
+  PawPrint,
+  Recycle,
+  Languages,
+  Rocket,
+  Leaf,
+  Diamond,
+  Swords,
+  ArrowLeftRight,
+  Telescope,
+} from "lucide-react";
 
 const GAMES: GameConfig[] = [
   // ─── Category A: Competitive ───
@@ -11,7 +26,7 @@ const GAMES: GameConfig[] = [
     slug: "math-tug-of-war",
     title: "Math Tug-of-War",
     subtitle: "Tarik Tambang Matematika",
-    icon: "➗",
+    icon: <Divide size={28} />,
     category: "A",
     description: "Race to solve math problems and pull the rope to your side!",
     players: 2,
@@ -23,7 +38,7 @@ const GAMES: GameConfig[] = [
     slug: "quiz-tug-of-war",
     title: "Quiz Tug-of-War",
     subtitle: "Tarik Tambang Kuis",
-    icon: "🧠",
+    icon: <Brain size={28} />,
     category: "A",
     description: "General knowledge trivia battle — who pulls hardest wins!",
     players: 2,
@@ -35,7 +50,7 @@ const GAMES: GameConfig[] = [
     slug: "math-pipette-duel",
     title: "Pipette Duel",
     subtitle: "Duel Pipet Matematika",
-    icon: "🧪",
+    icon: <FlaskConical size={28} />,
     category: "A",
     description: "Fill your test tube faster by solving math questions.",
     players: 2,
@@ -47,7 +62,7 @@ const GAMES: GameConfig[] = [
     slug: "word-pinisi-duel",
     title: "Word Pinisi Duel",
     subtitle: "Duel Pinisi Kata",
-    icon: "⛵",
+    icon: <Sailboat size={28} />,
     category: "A",
     description: "Guess words from clues before your Pinisi ship sinks!",
     players: 2,
@@ -61,7 +76,7 @@ const GAMES: GameConfig[] = [
     slug: "animal-classification",
     title: "Animal Classification",
     subtitle: "Klasifikasi Hewan",
-    icon: "🦁",
+    icon: <PawPrint size={28} />,
     category: "B",
     description: "Classify animals into the correct biological categories!",
     players: 2,
@@ -73,7 +88,7 @@ const GAMES: GameConfig[] = [
     slug: "waste-sorting-race",
     title: "Waste Sorting Race",
     subtitle: "Balapan Pilah Sampah",
-    icon: "♻️",
+    icon: <Recycle size={28} />,
     category: "B",
     description: "Sort falling waste items before the conveyor overflows!",
     players: 2,
@@ -85,7 +100,7 @@ const GAMES: GameConfig[] = [
     slug: "english-match",
     title: "English Match",
     subtitle: "Cocokkan Kosakata",
-    icon: "🔤",
+    icon: <Languages size={28} />,
     category: "B",
     description: "Draw lines to match English words with their translations.",
     players: 2,
@@ -99,7 +114,7 @@ const GAMES: GameConfig[] = [
     slug: "space-exploration",
     title: "Space Exploration",
     subtitle: "Jelajah Antariksa",
-    icon: "🚀",
+    icon: <Rocket size={28} />,
     category: "C",
     description: "Map the solar system — drag moons onto their planets.",
     players: 2,
@@ -111,7 +126,7 @@ const GAMES: GameConfig[] = [
     slug: "king-of-jungle",
     title: "King of the Jungle",
     subtitle: "Sang Juara Rimba",
-    icon: "🌿",
+    icon: <Leaf size={28} />,
     category: "C",
     description: "Digital board game through Indonesian wilderness terrain.",
     players: 2,
@@ -123,7 +138,7 @@ const GAMES: GameConfig[] = [
     slug: "geometric-shapes",
     title: "Geometric Shapes",
     subtitle: "Bangun Ruang Interaktif",
-    icon: "🔷",
+    icon: <Diamond size={28} />,
     category: "C",
     description: "Rotate 3D shapes and unfold them into flat nets.",
     players: 2,
@@ -138,7 +153,7 @@ const CATEGORIES = [
     id: "A",
     label: "Kompetitif",
     labelEn: "Competitive",
-    icon: "⚔️",
+    icon: <Swords size={14} />,
     color: "#d97706",      // amber-600
     bg: "#fffbeb",         // amber-50
     borderColor: "#fde68a", // amber-200
@@ -148,7 +163,7 @@ const CATEGORIES = [
     id: "B",
     label: "Sorting & Matching",
     labelEn: "Sort & Match",
-    icon: "🗂️",
+    icon: <ArrowLeftRight size={14} />,
     color: "#059669",      // emerald-600
     bg: "#ecfdf5",         // emerald-50
     borderColor: "#a7f3d0", // emerald-200
@@ -158,7 +173,7 @@ const CATEGORIES = [
     id: "C",
     label: "Eksplorasi",
     labelEn: "Exploration",
-    icon: "🔭",
+    icon: <Telescope size={14} />,
     color: "#7c3aed",      // violet-600
     bg: "#f5f3ff",         // violet-50
     borderColor: "#ddd6fe", // violet-200
@@ -269,7 +284,7 @@ export default function DashboardPage() {
             className="font-black leading-none tracking-tight text-[#0ea5e9]"
             style={{ fontSize: "var(--text-xl)" }}
           >
-            EduPanel <span className="text-[#2563eb]">Hub</span>
+            EduPanel
           </h1>
           <p
             className="text-gray-500 font-bold tracking-wide mt-1"
@@ -308,7 +323,7 @@ export default function DashboardPage() {
                   className="rounded-full flex-shrink-0"
                   style={{ width: "3px", height: "clamp(14px, 2vh, 22px)", background: cat.color }}
                 />
-                <span style={{ fontSize: "clamp(12px, 1.1vw, 16px)" }}>{cat.icon}</span>
+                <span>{cat.icon}</span>
                 <span
                   className="font-black tracking-wide"
                   style={{ fontSize: "clamp(11px, 1vw, 15px)", color: cat.color }}

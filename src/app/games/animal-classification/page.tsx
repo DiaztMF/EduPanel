@@ -58,18 +58,18 @@ function TeamPanel({ player, score, lastResult, lastFact, onClassify, disabled }
 
   return (
     <div className="flex flex-col bg-white rounded-2xl shadow-lg border-2 overflow-hidden w-full h-full" style={{ borderColor: borderColor }}>
-      <div className="flex items-center justify-center text-white shadow-inner flex-shrink-0" style={{ backgroundColor: headerColor, paddingBlock: "clamp(8px, 1.2vh, 16px)" }}>
+      <div className="flex items-center justify-center text-white shadow-inner flex-shrink-0" style={{ backgroundColor: headerColor, paddingBlock: "clamp(10px, 1.5vh, 20px)" }}>
         <h2 className="font-bold tracking-widest" style={{ fontSize: "clamp(14px, 1.4vw, 22px)" }}>{teamName}</h2>
       </div>
 
-      <div className="flex-1 flex flex-col min-h-0" style={{ padding: "clamp(8px, 1.2vh, 14px)", background: "#f8fafc", gap: "clamp(6px, 1vh, 10px)" }}>
+      <div className="flex-1 flex flex-col min-h-0" style={{ padding: "clamp(12px, 1.8vh, 22px)", background: "#f8fafc", gap: "clamp(8px, 1.2vh, 16px)" }}>
         <div className="flex-shrink-0" style={{ minHeight: "clamp(28px, 3.5vh, 44px)" }}>
           <AnimatePresence mode="wait">
             {lastResult && lastFact && (
               <motion.div key={lastFact + lastResult}
                 initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-                className="rounded-xl px-3 py-1 text-center shadow-sm w-full"
-                style={{ background: lastResult === "correct" ? "#d1fae5" : "#fee2e2", border: `1px solid ${lastResult === "correct" ? "#34d399" : "#f87171"}` }}>
+                className="rounded-xl text-center shadow-sm w-full"
+                style={{ padding: "clamp(6px, 0.8vh, 12px) clamp(10px, 1.2vw, 18px)", background: lastResult === "correct" ? "#d1fae5" : "#fee2e2", border: `1px solid ${lastResult === "correct" ? "#34d399" : "#f87171"}` }}>
                 <p className="font-bold" style={{ fontSize: "clamp(10px, 1.1vw, 14px)", color: lastResult === "correct" ? "#059669" : "#b91c1c" }}>
                   {lastResult === "correct" ? "✅ Benar! +10" : "❌ Salah! -3"} · {lastFact}
                 </p>
@@ -78,7 +78,7 @@ function TeamPanel({ player, score, lastResult, lastFact, onClassify, disabled }
           </AnimatePresence>
         </div>
 
-        <div className="w-full grid grid-cols-3 flex-1 min-h-0" style={{ gap: "clamp(6px, 1vh, 10px)" }}>
+        <div className="w-full grid grid-cols-3 flex-1 min-h-0" style={{ gap: "clamp(8px, 1.2vh, 16px)" }}>
           {ALL_CLASSES.map((cls) => (
             <ClassBtn key={cls} cls={cls} player={player}
               onPress={() => onClassify(cls)}
@@ -143,46 +143,46 @@ export default function AnimalClassificationPage() {
       />
 
       {/* SCOREBOARD */}
-      <div className="w-full z-10 flex-shrink-0" style={{ padding: "clamp(8px, 1.2vh, 14px) clamp(20px, 4vw, 60px) 0" }}>
-         <div className="w-full bg-[#ffedd5] border border-[#fdba74] shadow-sm rounded-2xl p-3 flex flex-col gap-2">
+      <div className="w-full z-10 flex-shrink-0" style={{ padding: "clamp(12px, 2vh, 24px) clamp(20px, 4vw, 60px) 0" }}>
+         <div className="w-full bg-white border-2 border-gray-200 shadow-lg rounded-2xl flex flex-col" style={{ padding: "clamp(12px, 1.5vh, 20px)", gap: "clamp(8px, 1vh, 14px)" }}>
            
-           {/* Tim Merah (P2) */}
-           <div className="flex items-center gap-4 w-full">
-              <div className="w-6 h-6 rounded-full bg-[#ef4444] shadow-inner flex-shrink-0"></div>
-              <div className="w-20 font-bold text-[#b91c1c] tracking-wider" style={{ fontSize: "clamp(12px, 1.3vw, 16px)" }}>MERAH</div>
-              <div className="flex-1 h-5 bg-[#fef3c7] rounded-full border-2 border-[#fcd34d] overflow-hidden relative shadow-inner">
-                 <motion.div className="h-full bg-gradient-to-r from-[#fcd34d] to-[#fbbf24]" animate={{ width: `${p2Pct}%` }} transition={{ type: "spring" }} />
-              </div>
-              <div className="w-16 bg-white font-bold text-center py-1 rounded-lg border shadow-sm text-gray-700" style={{ fontSize: "clamp(11px, 1.1vw, 14px)" }}>{p2Score} pts</div>
-           </div>
+            {/* Tim Biru (P1) */}
+            <div className="flex items-center gap-4 w-full">
+               <div className="w-5 h-5 rounded-full flex-shrink-0" style={{ background: "#1e3a8a" }}></div>
+               <div className="w-24 font-bold tracking-wider flex-shrink-0" style={{ fontSize: "clamp(13px, 1.3vw, 18px)", color: "#1e3a8a" }}>TIM BIRU</div>
+               <div className="flex-1 h-6 bg-[#e0f2fe] rounded-full border overflow-hidden relative shadow-inner" style={{ borderColor: "#b9ddf5" }}>
+                  <motion.div className="h-full rounded-full" style={{ background: "linear-gradient(90deg, #1e3a8a, #3b82f6)" }} animate={{ width: `${p1Pct}%` }} transition={{ type: "spring" }} />
+               </div>
+               <div className="font-bold text-center rounded-xl border-2 shadow-sm" style={{ padding: "clamp(4px, 0.6vh, 8px) clamp(10px, 1.2vw, 20px)", fontSize: "clamp(13px, 1.3vw, 18px)", color: "#1e3a8a", borderColor: "#1e3a8a", background: "#eff6ff" }}>{p1Score}</div>
+            </div>
 
-           {/* Tim Biru (P1) */}
-           <div className="flex items-center gap-4 w-full">
-              <div className="w-6 h-6 rounded-full bg-[#3b82f6] shadow-inner flex-shrink-0"></div>
-              <div className="w-20 font-bold text-[#1d4ed8] tracking-wider" style={{ fontSize: "clamp(12px, 1.3vw, 16px)" }}>BIRU</div>
-              <div className="flex-1 h-5 bg-[#fef3c7] rounded-full border-2 border-[#fcd34d] overflow-hidden relative shadow-inner">
-                 <motion.div className="h-full bg-gradient-to-r from-[#fcd34d] to-[#fbbf24]" animate={{ width: `${p1Pct}%` }} transition={{ type: "spring" }} />
-              </div>
-              <div className="w-16 bg-white font-bold text-center py-1 rounded-lg border shadow-sm text-gray-700" style={{ fontSize: "clamp(11px, 1.1vw, 14px)" }}>{p1Score} pts</div>
-           </div>
+            {/* Tim Merah (P2) */}
+            <div className="flex items-center gap-4 w-full">
+               <div className="w-5 h-5 rounded-full flex-shrink-0" style={{ background: "#7f1d1d" }}></div>
+               <div className="w-24 font-bold tracking-wider flex-shrink-0" style={{ fontSize: "clamp(13px, 1.3vw, 18px)", color: "#7f1d1d" }}>TIM MERAH</div>
+               <div className="flex-1 h-6 bg-[#fef2f2] rounded-full border overflow-hidden relative shadow-inner" style={{ borderColor: "#f5c6c6" }}>
+                  <motion.div className="h-full rounded-full" style={{ background: "linear-gradient(90deg, #7f1d1d, #ef4444)" }} animate={{ width: `${p2Pct}%` }} transition={{ type: "spring" }} />
+               </div>
+               <div className="font-bold text-center rounded-xl border-2 shadow-sm" style={{ padding: "clamp(4px, 0.6vh, 8px) clamp(10px, 1.2vw, 20px)", fontSize: "clamp(13px, 1.3vw, 18px)", color: "#7f1d1d", borderColor: "#7f1d1d", background: "#fef2f2" }}>{p2Score}</div>
+            </div>
 
          </div>
       </div>
 
       {/* CENTER ANIMAL DISPLAY */}
-      <div className="w-full z-10 flex-shrink-0" style={{ padding: "clamp(6px, 1vh, 12px) clamp(20px, 4vw, 60px)" }}>
+      <div className="w-full z-10 flex-shrink-0" style={{ padding: "clamp(8px, 1.5vh, 18px) clamp(20px, 4vw, 60px)" }}>
          <AnimatePresence mode="wait">
            {currentAnimal && (
              <motion.div 
                key={currentAnimal.id}
                initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} transition={{ duration: 0.2 }}
                className="bg-white rounded-2xl shadow-md border border-gray-200 text-center w-full flex flex-col items-center justify-center"
-               style={{ minHeight: "clamp(90px, 14vh, 170px)", padding: "clamp(8px, 1.2vh, 18px)" }}
+               style={{ minHeight: "clamp(100px, 16vh, 200px)", padding: "clamp(12px, 1.8vh, 24px)" }}
              >
-               <span style={{ fontSize: "clamp(40px, 7vw, 90px)", lineHeight: 1 }}>
-                 {currentAnimal.emoji}
-               </span>
-               <h2 className="font-black text-[#1f2937] mt-1" style={{ fontSize: "clamp(18px, 2.2vw, 36px)" }}>
+                <span style={{ fontSize: "clamp(48px, 8vw, 110px)", lineHeight: 1 }}>
+                  {currentAnimal.emoji}
+                </span>
+                <h2 className="font-black text-[#1f2937] mt-1" style={{ fontSize: "clamp(20px, 2.5vw, 40px)" }}>
                  {currentAnimal.name}
                </h2>
              </motion.div>
@@ -191,7 +191,7 @@ export default function AnimalClassificationPage() {
       </div>
 
       {/* TEAM PANELS */}
-      <div className="flex-1 w-full z-10 flex gap-8 min-h-0" style={{ padding: "0 clamp(20px, 4vw, 60px) clamp(8px, 1.2vh, 14px)" }}>
+      <div className="flex-1 w-full z-10 flex gap-8 min-h-0" style={{ padding: "clamp(4px, 0.8vh, 10px) clamp(20px, 4vw, 60px) clamp(12px, 2vh, 24px)" }}>
         <div className="flex-1 min-w-0">
           <TeamPanel 
             player={2} 

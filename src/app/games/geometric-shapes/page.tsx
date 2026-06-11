@@ -145,42 +145,42 @@ export default function GeometricShapesPage() {
         subtitle="Jelajahi bangun ruang 3D & cocokkan rumusnya!"
       />
 
-      {/* SCOREBOARD (PROGRESS BARS IN A BEIGE BOARD) */}
-      <div className="w-full max-w-6xl px-8 py-4 z-10 flex flex-col items-center">
-         <div className="w-full bg-[#ffedd5] border border-[#fdba74] shadow-sm rounded-2xl p-4 flex flex-col gap-3">
-           
-           {/* Tim Merah (P2) */}
-           <div className="flex items-center gap-4 w-full">
-              <div className="w-6 h-6 rounded-full bg-[#ef4444] shadow-inner flex-shrink-0"></div>
-              <div className="w-20 font-bold text-[#b91c1c] tracking-wider" style={{ fontSize: "clamp(12px, 1.5vw, 18px)" }}>MERAH</div>
-              <div className="flex-1 h-6 bg-[#fef3c7] rounded-full border-2 border-[#fcd34d] overflow-hidden relative shadow-inner">
-                 <motion.div className="h-full bg-gradient-to-r from-[#fcd34d] to-[#fbbf24]" animate={{ width: `${p2Pct}%` }} transition={{ type: "spring" }} />
-              </div>
-              <div className="w-16 bg-white font-bold text-center py-1 rounded-lg border shadow-sm text-gray-700">{p2Score} pts</div>
-           </div>
+      {/* SCOREBOARD */}
+      <div className="w-full z-10 flex-shrink-0" style={{ padding: "clamp(12px, 2vh, 24px) clamp(20px, 4vw, 60px) 0" }}>
+         <div className="w-full bg-white border-2 border-gray-200 shadow-lg rounded-2xl flex flex-col" style={{ padding: "clamp(12px, 1.5vh, 20px)", gap: "clamp(8px, 1vh, 14px)" }}>
 
-           {/* Tim Biru (P1) */}
-           <div className="flex items-center gap-4 w-full">
-              <div className="w-6 h-6 rounded-full bg-[#3b82f6] shadow-inner flex-shrink-0"></div>
-              <div className="w-20 font-bold text-[#1d4ed8] tracking-wider" style={{ fontSize: "clamp(12px, 1.5vw, 18px)" }}>BIRU</div>
-              <div className="flex-1 h-6 bg-[#fef3c7] rounded-full border-2 border-[#fcd34d] overflow-hidden relative shadow-inner">
-                 <motion.div className="h-full bg-gradient-to-r from-[#fcd34d] to-[#fbbf24]" animate={{ width: `${p1Pct}%` }} transition={{ type: "spring" }} />
-              </div>
-              <div className="w-16 bg-white font-bold text-center py-1 rounded-lg border shadow-sm text-gray-700">{p1Score} pts</div>
-           </div>
+            {/* Tim Biru (P1) */}
+            <div className="flex items-center gap-4 w-full">
+               <div className="w-5 h-5 rounded-full flex-shrink-0" style={{ background: "#1e3a8a" }}></div>
+               <div className="w-24 font-bold tracking-wider flex-shrink-0" style={{ fontSize: "clamp(13px, 1.3vw, 18px)", color: "#1e3a8a" }}>TIM BIRU</div>
+               <div className="flex-1 h-6 bg-[#e0f2fe] rounded-full border overflow-hidden relative shadow-inner" style={{ borderColor: "#b9ddf5" }}>
+                  <motion.div className="h-full rounded-full" style={{ background: "linear-gradient(90deg, #1e3a8a, #3b82f6)" }} animate={{ width: `${p1Pct}%` }} transition={{ type: "spring" }} />
+               </div>
+               <div className="font-bold text-center rounded-xl border-2 shadow-sm" style={{ padding: "clamp(4px, 0.6vh, 8px) clamp(10px, 1.2vw, 20px)", fontSize: "clamp(13px, 1.3vw, 18px)", color: "#1e3a8a", borderColor: "#1e3a8a", background: "#eff6ff" }}>{p1Score}</div>
+            </div>
+
+            {/* Tim Merah (P2) */}
+            <div className="flex items-center gap-4 w-full">
+               <div className="w-5 h-5 rounded-full flex-shrink-0" style={{ background: "#7f1d1d" }}></div>
+               <div className="w-24 font-bold tracking-wider flex-shrink-0" style={{ fontSize: "clamp(13px, 1.3vw, 18px)", color: "#7f1d1d" }}>TIM MERAH</div>
+               <div className="flex-1 h-6 bg-[#fef2f2] rounded-full border overflow-hidden relative shadow-inner" style={{ borderColor: "#f5c6c6" }}>
+                  <motion.div className="h-full rounded-full" style={{ background: "linear-gradient(90deg, #7f1d1d, #ef4444)" }} animate={{ width: `${p2Pct}%` }} transition={{ type: "spring" }} />
+               </div>
+               <div className="font-bold text-center rounded-xl border-2 shadow-sm" style={{ padding: "clamp(4px, 0.6vh, 8px) clamp(10px, 1.2vw, 20px)", fontSize: "clamp(13px, 1.3vw, 18px)", color: "#7f1d1d", borderColor: "#7f1d1d", background: "#fef2f2" }}>{p2Score}</div>
+            </div>
 
          </div>
       </div>
 
       {/* MAIN CONTENT PANELS */}
-      <div className="flex-1 w-full max-w-7xl px-8 pb-8 z-10 flex gap-6 min-h-0">
+      <div className="flex-1 w-full z-10 flex gap-6 min-h-0" style={{ padding: "clamp(4px,0.8vh,10px) clamp(20px,4vw,60px) clamp(12px,2vh,24px)" }}>
 
         {/* LEFT: P1 formula cards (TIM BIRU) */}
         <div className="flex flex-col bg-white rounded-2xl shadow-lg border-2 overflow-hidden w-full h-full" style={{ borderColor: "#1e3a8a", width: "clamp(200px,25vw,300px)" }}>
-          <div className="flex items-center justify-center text-white py-3 px-6 shadow-inner relative bg-[#1e1b4b]">
+          <div className="flex items-center justify-center text-white shadow-inner relative bg-[#1e1b4b]" style={{ padding: "clamp(12px,1.8vh,22px) clamp(16px,2.5vw,32px)" }}>
             <h2 className="font-bold tracking-widest text-center" style={{ fontSize: "clamp(16px, 1.5vw, 24px)" }}>TIM BIRU</h2>
           </div>
-          <div className="flex-1 flex flex-col gap-2 p-4 bg-[#f8fafc] overflow-y-auto">
+          <div className="flex-1 flex flex-col overflow-y-auto bg-[#f8fafc]" style={{ padding: "clamp(10px,1.5vh,18px)", gap: "clamp(6px,0.8vh,12px)" }}>
             {FORMULA_CARDS.filter((_, i) => i % 2 === 0).map((card) => {
               const key = `${card.shapeId}-${card.type}`;
               const isMatched = matchedFor(card);
@@ -190,11 +190,11 @@ export default function GeometricShapesPage() {
                 <motion.button key={key}
                   onPointerDown={(e) => { e.stopPropagation(); if (!isMatched) handleMatchFormula(1, card); }}
                   animate={{ scale: isWrong ? [1, 0.9, 1] : 1, background: isMatched ? "#d1fae5" : isWrong ? "#fee2e2" : "white" }}
-                  className="touch-btn text-left font-bold rounded-xl shadow-sm border-2"
+                  className="text-left font-bold rounded-xl shadow-sm border-2 active:translate-y-0.5 transition-all"
                   style={{ borderColor: isMatched ? "#10b981" : isWrong ? "#ef4444" : "#e5e7eb", color: isMatched ? "#059669" : "#374151", padding: "clamp(6px,0.9vh,12px) clamp(8px,1vw,14px)", fontSize: "clamp(12px,1.5vw,16px)", opacity: isMatched ? 0.6 : 1, textDecoration: isMatched ? "line-through" : "none", touchAction: "manipulation" }}
                 >
                   <span style={{ color: shape.color }}>{shape.emoji}</span> {shape.nameId}
-                  <br /><span className="text-gray-500">{card.label}: {card.formula}</span>
+                  <br /><span className="text-gray-500">{card.label}</span>
                 </motion.button>
               );
             })}
@@ -209,7 +209,7 @@ export default function GeometricShapesPage() {
               <motion.button key={s.id}
                 onPointerDown={(e) => { e.stopPropagation(); setSelectedShape(s); setIsUnfolded(false); }}
                 animate={{ background: selectedShape.id === s.id ? `${s.color}25` : "#f3f4f6" }}
-                className="touch-btn flex flex-col items-center gap-1 font-bold shadow-sm"
+                className="flex flex-col items-center gap-1 font-bold shadow-sm active:translate-y-0.5 transition-all"
                 style={{ border: `2px solid ${selectedShape.id === s.id ? s.color : "#e5e7eb"}`, borderRadius: "12px", padding: "clamp(6px,0.9vh,12px) clamp(10px,1.4vw,18px)", color: selectedShape.id === s.id ? s.color : "#4b5563", fontSize: "clamp(9px,1vw,13px)", touchAction: "manipulation" }}
               >
                 <span style={{ fontSize: "clamp(18px,2.8vw,38px)" }}>{s.emoji}</span>
@@ -230,7 +230,7 @@ export default function GeometricShapesPage() {
             <motion.button
               onPointerDown={(e) => { e.stopPropagation(); setIsUnfolded((v) => !v); }}
               whileTap={{ scale: 0.92 }}
-              className="touch-btn font-bold shadow-sm"
+              className="font-bold shadow-sm active:translate-y-0.5 transition-all"
               style={{ background: `white`, color: selectedShape.color, border: `2px solid ${selectedShape.color}`, borderRadius: "12px", padding: "clamp(8px,1.2vh,16px) clamp(20px,3vw,40px)", fontSize: "clamp(11px,1.4vw,20px)", touchAction: "manipulation" }}
             >
               {isUnfolded ? "🔁 3D View" : "📐 Buka Jaring-Jaring"}
@@ -258,11 +258,11 @@ export default function GeometricShapesPage() {
         </div>
 
         {/* RIGHT: P2 formula cards (TIM MERAH) */}
-        <div className="flex flex-col bg-white rounded-2xl shadow-lg border-2 overflow-hidden w-full h-full" style={{ borderColor: "#b91c1c", width: "clamp(200px,25vw,300px)" }}>
-          <div className="flex items-center justify-center text-white py-3 px-6 shadow-inner relative bg-[#7f1d1d]">
+        <div className="flex flex-col bg-white rounded-2xl shadow-lg border-2 overflow-hidden w-full h-full" style={{ borderColor: "#7f1d1d", width: "clamp(200px,25vw,300px)" }}>
+          <div className="flex items-center justify-center text-white shadow-inner relative bg-[#7f1d1d]" style={{ padding: "clamp(12px,1.8vh,22px) clamp(16px,2.5vw,32px)" }}>
             <h2 className="font-bold tracking-widest text-center" style={{ fontSize: "clamp(16px, 1.5vw, 24px)" }}>TIM MERAH</h2>
           </div>
-          <div className="flex-1 flex flex-col gap-2 p-4 bg-[#f8fafc] overflow-y-auto">
+          <div className="flex-1 flex flex-col overflow-y-auto bg-[#f8fafc]" style={{ padding: "clamp(10px,1.5vh,18px)", gap: "clamp(6px,0.8vh,12px)" }}>
             {FORMULA_CARDS.filter((_, i) => i % 2 === 1).map((card) => {
               const key = `${card.shapeId}-${card.type}`;
               const isMatched = matchedFor(card);
@@ -272,11 +272,11 @@ export default function GeometricShapesPage() {
                 <motion.button key={key}
                   onPointerDown={(e) => { e.stopPropagation(); if (!isMatched) handleMatchFormula(2, card); }}
                   animate={{ scale: isWrong ? [1, 0.9, 1] : 1, background: isMatched ? "#d1fae5" : isWrong ? "#fee2e2" : "white" }}
-                  className="touch-btn text-right font-bold rounded-xl shadow-sm border-2"
+                  className="text-right font-bold rounded-xl shadow-sm border-2 active:translate-y-0.5 transition-all"
                   style={{ borderColor: isMatched ? "#10b981" : isWrong ? "#ef4444" : "#e5e7eb", color: isMatched ? "#059669" : "#374151", padding: "clamp(6px,0.9vh,12px) clamp(8px,1vw,14px)", fontSize: "clamp(12px,1.5vw,16px)", opacity: isMatched ? 0.6 : 1, textDecoration: isMatched ? "line-through" : "none", touchAction: "manipulation" }}
                 >
                   {shape.nameId} <span style={{ color: shape.color }}>{shape.emoji}</span>
-                  <br /><span className="text-gray-500">{card.label}: {card.formula}</span>
+                  <br /><span className="text-gray-500">{card.label}</span>
                 </motion.button>
               );
             })}
@@ -298,7 +298,7 @@ export default function GeometricShapesPage() {
               <p className="text-gray-600 font-bold mt-2" style={{ fontSize: "clamp(16px,1.6vw,22px)" }}>Jelajahi bangun ruang 3D & cocokkan rumusnya!</p>
             </div>
             <motion.button onPointerDown={() => setPhase("playing")} whileTap={{ scale: 0.92 }}
-              className="touch-btn font-black border-2 border-b-4"
+              className="font-black border-2 border-b-4 active:translate-y-1 transition-all"
               style={{ background: "#3b82f6", borderColor: "#1d4ed8", color: "white", borderRadius: "16px", padding: "clamp(14px,2vh,24px) clamp(32px,5vw,64px)", fontSize: "clamp(16px,2.2vw,30px)", touchAction: "manipulation" }}>
               🔷 Mulai Eksplorasi
             </motion.button>

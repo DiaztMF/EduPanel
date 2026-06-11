@@ -1,6 +1,6 @@
 # Laporan Pembaruan EduPanel (Update Log) from Diaby
 
-Berikut adalah ringkasan dari semua perubahan, peningkatan, dan perbaikan *bug* yang telah kita lakukan pada sesi pengembangan ini:
+Berikut adalah ringkasan dari semua perubahan, peningkatan, dan perbaikan *bug* yang telah dilakukan pada sesi pengembangan ini:
 
 ## 1. Perubahan Mekanika Game (Gameplay Mechanics)
 

@@ -193,8 +193,7 @@ export default function GeometricShapesPage() {
                   className="text-left font-bold rounded-xl shadow-sm border-2 active:translate-y-0.5 transition-all"
                   style={{ borderColor: isMatched ? "#10b981" : isWrong ? "#ef4444" : "#e5e7eb", color: isMatched ? "#059669" : "#374151", padding: "clamp(6px,0.9vh,12px) clamp(8px,1vw,14px)", fontSize: "clamp(12px,1.5vw,16px)", opacity: isMatched ? 0.6 : 1, textDecoration: isMatched ? "line-through" : "none", touchAction: "manipulation" }}
                 >
-                  <span style={{ color: shape.color }}>{shape.emoji}</span> {shape.nameId}
-                  <br /><span className="text-gray-500">{card.label}</span>
+                  <span className="text-gray-500">{card.label}: {card.formula}</span>
                 </motion.button>
               );
             })}
@@ -275,8 +274,7 @@ export default function GeometricShapesPage() {
                   className="text-right font-bold rounded-xl shadow-sm border-2 active:translate-y-0.5 transition-all"
                   style={{ borderColor: isMatched ? "#10b981" : isWrong ? "#ef4444" : "#e5e7eb", color: isMatched ? "#059669" : "#374151", padding: "clamp(6px,0.9vh,12px) clamp(8px,1vw,14px)", fontSize: "clamp(12px,1.5vw,16px)", opacity: isMatched ? 0.6 : 1, textDecoration: isMatched ? "line-through" : "none", touchAction: "manipulation" }}
                 >
-                  {shape.nameId} <span style={{ color: shape.color }}>{shape.emoji}</span>
-                  <br /><span className="text-gray-500">{card.label}</span>
+                  <span className="text-gray-500">{card.label}: {card.formula}</span>
                 </motion.button>
               );
             })}

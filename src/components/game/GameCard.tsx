@@ -2,13 +2,15 @@
 
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { Users, Timer } from "lucide-react";
+import type { ReactNode } from "react";
 
 export interface GameConfig {
   id: string;
   slug: string;
   title: string;
   subtitle: string;
-  icon: string;
+  icon: ReactNode;
   category?: string;
   description: string;
   players: number;
@@ -75,7 +77,6 @@ export function GameCard({ game, index, accentColor = "#0ea5e9", accentBg = "#f0
             style={{
               width: "clamp(40px, 5vw, 56px)",
               height: "clamp(40px, 5vw, 56px)",
-              fontSize: "clamp(22px, 2.8vw, 34px)",
               background: accentBg,
               border: `1.5px solid ${accentColor}35`,
             }}
@@ -119,13 +120,13 @@ export function GameCard({ game, index, accentColor = "#0ea5e9", accentBg = "#f0
               fontSize: "clamp(9px, 0.8vw, 11px)",
             }}
           >
-            👥 {game.players}P
+            <Users size={12} /> {game.players}P
           </div>
           <span
             className="text-gray-400 font-bold"
             style={{ fontSize: "clamp(9px, 0.8vw, 11px)" }}
           >
-            ⏱ {game.duration}
+            <Timer size={12} /> {game.duration}
           </span>
         </div>
       </div>

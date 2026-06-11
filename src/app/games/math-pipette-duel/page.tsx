@@ -221,15 +221,15 @@ export default function MathPipetteDuelPage() {
         </div>
 
         {/* Center Pipettes */}
-        <div className="flex-1 flex justify-center items-end relative z-10 mx-6 h-full min-w-0">
+        <div className="flex-1 flex justify-center relative z-10 m-6 h-full min-w-0">
           <PipetteTube level={p1Level} player={1} />
 
           {/* VS Badge */}
-          <div className="flex flex-col items-center justify-center mx-6 mb-12">
-            <div className="bg-white border border-gray-300 rounded-2xl flex flex-col items-center justify-center shadow-md" style={{ padding: "clamp(10px, 1.5vh, 20px) clamp(16px, 2vw, 32px)" }}>
+          <div className="flex flex-col items-center justify-center m-6 gap-5">
+            <div className=" bg-white border border-gray-300 rounded-2xl flex flex-col items-center justify-center shadow-md" style={{ padding: "clamp(10px, 1.5vh, 20px) clamp(16px, 2vw, 32px)" }}>
               <span className="text-[#1f2937] font-black italic" style={{ fontSize: "clamp(32px, 4vw, 64px)" }}>VS</span>
             </div>
-            <div className="mt-4 bg-gray-800 rounded-full text-white font-bold shadow-md" style={{ padding: "clamp(6px, 1vh, 10px) clamp(16px, 2vw, 32px)", fontSize: "clamp(14px, 1.5vw, 20px)" }}>
+            <div className="bg-gray-800 rounded-full text-white font-bold shadow-md" style={{ padding: "clamp(6px, 1vh, 10px) clamp(16px, 2vw, 32px)", fontSize: "clamp(14px, 1.5vw, 20px)" }}>
               Target: 100%
             </div>
           </div>

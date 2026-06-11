@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { RotateCcw, Home } from "lucide-react";
 
 interface VictoryResultModalProps {
   isOpen: boolean;
@@ -14,7 +15,7 @@ interface VictoryResultModalProps {
   rematchLabel?: string;
 }
 
-const CONFETTI_COLORS = ["#6c8eff", "#ff6b6b", "#a78bff", "#4adeab", "#ffaa5e", "#ffffff"];
+const CONFETTI_COLORS = ["#3b82f6", "#ef4444", "#a78bff", "#4adeab", "#ffaa5e", "#0ea5e9"];
 
 function ConfettiPiece({ i }: { i: number }) {
   const color = CONFETTI_COLORS[i % CONFETTI_COLORS.length];
@@ -42,19 +43,19 @@ export function VictoryResultModal({
   p1Label = "Player 1",
   p2Label = "Player 2",
   onRematch,
-  rematchLabel = "🔄 Rematch",
+  rematchLabel = "Rematch",
 }: VictoryResultModalProps) {
   const winnerLabel =
     winner === "p1" ? p1Label : winner === "p2" ? p2Label : null;
   const winnerColor =
-    winner === "p1" ? "#6c8eff" : winner === "p2" ? "#ff6b6b" : "#a78bff";
+    winner === "p1" ? "#1e3a8a" : winner === "p2" ? "#7f1d1d" : "#6b7280";
 
   return (
     <AnimatePresence>
       {isOpen && (
         <motion.div
           className="absolute inset-0 z-50 flex items-center justify-center overflow-hidden"
-          style={{ background: "rgba(0,0,0,0.8)", backdropFilter: "blur(8px)" }}
+          style={{ background: "rgba(224,242,254,0.95)", backdropFilter: "blur(12px)" }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -66,20 +67,20 @@ export function VictoryResultModal({
 
           {/* Modal */}
           <motion.div
-            className="relative z-10 glass-card flex flex-col items-center text-center"
+            className="relative z-10 flex flex-col items-center text-center bg-white rounded-3xl shadow-2xl"
             style={{
               padding: "clamp(32px, 5vw, 64px)",
-              minWidth: "clamp(320px, 50vw, 640px)",
+              minWidth: "clamp(320px, 26vw, 480px)",
               gap: "clamp(16px, 2.5vh, 32px)",
-              border: `1px solid ${winnerColor}40`,
-              boxShadow: `0 0 60px ${winnerColor}30`,
+              border: `2px solid ${winnerColor}25`,
+              boxShadow: `0 0 60px ${winnerColor}20, 0 20px 60px rgba(0,0,0,0.08)`,
             }}
             initial={{ scale: 0.7, opacity: 0, y: 40 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.7, opacity: 0, y: 40 }}
             transition={{ type: "spring", bounce: 0.4, delay: 0.1 }}
           >
-            {/* Trophy / emoji */}
+            {/* Trophy */}
             <motion.div
               initial={{ scale: 0, rotate: -180 }}
               animate={{ scale: 1, rotate: 0 }}
@@ -93,12 +94,12 @@ export function VictoryResultModal({
             <div>
               <h2
                 className="font-black leading-none"
-                style={{ fontSize: "var(--text-2xl)", color: winnerColor }}
+                style={{ fontSize: "clamp(36px, 4vw, 72px)", color: winnerColor }}
               >
                 {winner === "draw" ? "Seri!" : "Menang!"}
               </h2>
               {winnerLabel && (
-                <p className="text-white/60 mt-2" style={{ fontSize: "var(--text-base)" }}>
+                <p className="text-gray-500 mt-2 font-bold" style={{ fontSize: "clamp(14px, 1.5vw, 22px)" }}>
                   {winnerLabel} memenangkan pertandingan
                 </p>
               )}
@@ -109,32 +110,32 @@ export function VictoryResultModal({
               className="flex items-center gap-6 rounded-2xl"
               style={{
                 padding: "clamp(12px, 2vh, 24px) clamp(24px, 4vw, 48px)",
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.08)",
+                background: "#f8fafc",
+                border: "1px solid #e2e8f0",
               }}
             >
               <div className="flex flex-col items-center gap-1">
                 <span
                   className="font-black"
-                  style={{ fontSize: "var(--text-xl)", color: "#6c8eff" }}
+                  style={{ fontSize: "clamp(24px, 3vw, 48px)", color: "#1e3a8a" }}
                 >
                   {p1Score}
                 </span>
-                <span className="text-white/40" style={{ fontSize: "var(--text-xs)" }}>
+                <span className="text-gray-400 font-bold" style={{ fontSize: "clamp(10px, 1vw, 14px)" }}>
                   {p1Label}
                 </span>
               </div>
-              <span className="text-white/20 font-bold" style={{ fontSize: "var(--text-lg)" }}>
+              <span className="text-gray-300 font-bold" style={{ fontSize: "clamp(20px, 2.5vw, 36px)" }}>
                 :
               </span>
               <div className="flex flex-col items-center gap-1">
                 <span
                   className="font-black"
-                  style={{ fontSize: "var(--text-xl)", color: "#ff6b6b" }}
+                  style={{ fontSize: "clamp(24px, 3vw, 48px)", color: "#7f1d1d" }}
                 >
                   {p2Score}
                 </span>
-                <span className="text-white/40" style={{ fontSize: "var(--text-xs)" }}>
+                <span className="text-gray-400 font-bold" style={{ fontSize: "clamp(10px, 1vw, 14px)" }}>
                   {p2Label}
                 </span>
               </div>
@@ -146,37 +147,38 @@ export function VictoryResultModal({
                 <motion.button
                   whileTap={{ scale: 0.94 }}
                   onClick={onRematch}
-                  className="touch-btn font-bold"
+                  className="touch-btn font-bold inline-flex items-center justify-center gap-2"
                   style={{
-                    background: `linear-gradient(135deg, ${winnerColor}, ${winnerColor}99)`,
+                    background: `linear-gradient(135deg, ${winnerColor}, ${winnerColor}dd)`,
                     color: "white",
                     padding: "clamp(12px, 2vh, 20px) clamp(24px, 4vw, 48px)",
-                    fontSize: "var(--text-base)",
+                    fontSize: "clamp(16px, 1.8vw, 28px)",
                     borderRadius: "14px",
                     minHeight: "var(--touch-lg)",
+                    border: "none",
+                    cursor: "pointer",
                   }}
                 >
+                  <RotateCcw size={20} />
                   {rematchLabel}
                 </motion.button>
               )}
               <Link
                 href="/"
+                className="inline-flex items-center justify-center gap-2 font-bold no-underline"
                 style={{
-                  background: "rgba(255,255,255,0.08)",
-                  color: "rgba(255,255,255,0.7)",
+                  background: "#f3f4f6",
+                  color: "#374151",
                   padding: "clamp(12px, 2vh, 20px) clamp(24px, 4vw, 48px)",
-                  fontSize: "var(--text-base)",
-                  fontWeight: 600,
+                  fontSize: "clamp(16px, 1.8vw, 28px)",
                   borderRadius: "14px",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  textDecoration: "none",
                   minHeight: "var(--touch-lg)",
-                  border: "1px solid rgba(255,255,255,0.1)",
+                  border: "2px solid #d1d5db",
+                  cursor: "pointer",
                 }}
               >
-                🏠 Menu
+                <Home size={20} />
+                Menu
               </Link>
             </div>
           </motion.div>

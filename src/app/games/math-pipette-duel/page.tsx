@@ -201,10 +201,10 @@ export default function MathPipetteDuelPage() {
       />
 
       {/* ── MAIN CONTENT ── */}
-      <div className="flex-1 w-full flex items-center justify-between min-h-0" style={{ padding: "clamp(12px, 2vh, 24px) clamp(24px, 4vw, 80px) clamp(16px, 2.5vh, 32px)" }}>
+      <div className="flex-1 w-full flex items-center justify-between min-h-0" style={{ padding: "clamp(14px, 2.5vh, 28px) clamp(24px, 4vw, 80px)" }}>
 
         {/* Left P1 Panel + Score */}
-        <div className="flex flex-col items-center z-10 flex-shrink-0 gap-3">
+        <div className="flex flex-col items-center z-10 flex-shrink-0 gap-4">
           <NumpadPanel
             player={1}
             question={p1Question.problem}
@@ -214,22 +214,22 @@ export default function MathPipetteDuelPage() {
           />
           <div
             className="bg-white border border-sky-200 rounded-xl font-bold text-center shadow-sm"
-            style={{ padding: "clamp(6px, 1vh, 10px) clamp(16px, 2vw, 28px)", fontSize: "clamp(14px, 1.5vw, 22px)", color: "#1e3a8a" }}
+            style={{ padding: "clamp(10px, 1.2vh, 16px) clamp(16px, 2vw, 28px)", fontSize: "clamp(14px, 1.5vw, 22px)", color: "#1e3a8a" }}
           >
             Skor: {p1Score}
           </div>
         </div>
 
         {/* Center Pipettes */}
-        <div className="flex-1 flex justify-center relative z-10 m-6 h-full min-w-0">
+        <div className="flex-1 flex items-center justify-center gap-6 relative z-10 h-full min-w-0" style={{ padding: "0 clamp(8px, 2vw, 32px)" }}>
           <PipetteTube level={p1Level} player={1} />
 
           {/* VS Badge */}
-          <div className="flex flex-col items-center justify-center m-6 gap-5">
-            <div className=" bg-white border border-gray-300 rounded-2xl flex flex-col items-center justify-center shadow-md" style={{ padding: "clamp(10px, 1.5vh, 20px) clamp(16px, 2vw, 32px)" }}>
+          <div className="flex flex-col items-center justify-center gap-5">
+            <div className="bg-white border border-gray-300 rounded-2xl flex flex-col items-center justify-center shadow-md" style={{ padding: "clamp(10px, 1.5vh, 20px) clamp(16px, 2vw, 32px)" }}>
               <span className="text-[#1f2937] font-black italic" style={{ fontSize: "clamp(32px, 4vw, 64px)" }}>VS</span>
             </div>
-            <div className="bg-gray-800 rounded-full text-white font-bold shadow-md" style={{ padding: "clamp(6px, 1vh, 10px) clamp(16px, 2vw, 32px)", fontSize: "clamp(14px, 1.5vw, 20px)" }}>
+            <div className="bg-gray-800 rounded-full text-white font-bold shadow-md" style={{ padding: "clamp(8px, 1.2vh, 14px) clamp(16px, 2vw, 32px)", fontSize: "clamp(14px, 1.5vw, 20px)" }}>
               Target: 100%
             </div>
           </div>
@@ -238,7 +238,7 @@ export default function MathPipetteDuelPage() {
         </div>
 
         {/* Right P2 Panel + Score */}
-        <div className="flex flex-col items-center z-10 flex-shrink-0 gap-3">
+        <div className="flex flex-col items-center z-10 flex-shrink-0 gap-4">
           <NumpadPanel
             player={2}
             question={p2Question.problem}
@@ -248,7 +248,7 @@ export default function MathPipetteDuelPage() {
           />
           <div
             className="bg-white border border-red-200 rounded-xl font-bold text-center shadow-sm"
-            style={{ padding: "clamp(6px, 1vh, 10px) clamp(16px, 2vw, 28px)", fontSize: "clamp(14px, 1.5vw, 22px)", color: "#7f1d1d" }}
+            style={{ padding: "clamp(10px, 1.2vh, 16px) clamp(16px, 2vw, 28px)", fontSize: "clamp(14px, 1.5vw, 22px)", color: "#7f1d1d" }}
           >
             Skor: {p2Score}
           </div>

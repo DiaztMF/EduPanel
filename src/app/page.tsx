@@ -284,7 +284,7 @@ export default function DashboardPage() {
             className="font-black leading-none tracking-tight text-[#0ea5e9]"
             style={{ fontSize: "var(--text-xl)" }}
           >
-            EduPanel
+            EduPanel <span className="text-[#2563eb]">Hub</span>
           </h1>
           <p
             className="text-gray-500 font-bold tracking-wide mt-1"

@@ -33,7 +33,7 @@ function MatchPanel({ player, state, onSelectEnglish, onSelectIndonesian, disabl
 }) {
   const isP1 = player === 1;
   const headerColor = isP1 ? "#1e1b4b" : "#7f1d1d";
-  const borderColor = isP1 ? "#1e3a8a" : "#b91c1c";
+  const borderColor = isP1 ? "#1e3a8a" : "#7f1d1d";
   const teamName = isP1 ? "TIM BIRU" : "TIM MERAH";
   const { pairs, selected, matched, wrongFlash, lastCorrect } = state;
 
@@ -46,12 +46,11 @@ function MatchPanel({ player, state, onSelectEnglish, onSelectIndonesian, disabl
 
   return (
     <div className="flex flex-col bg-white rounded-2xl shadow-lg border-2 overflow-hidden w-full h-full" style={{ borderColor: borderColor }}>
-      <div className="flex items-center justify-between text-white px-6 shadow-inner flex-shrink-0" style={{ backgroundColor: headerColor, paddingBlock: "clamp(8px, 1.2vh, 16px)" }}>
+      <div className="flex items-center justify-center text-white shadow-inner flex-shrink-0" style={{ backgroundColor: headerColor, paddingBlock: "clamp(10px, 1.5vh, 20px)" }}>
         <h2 className="font-bold tracking-widest" style={{ fontSize: "clamp(14px, 1.4vw, 22px)" }}>{teamName}</h2>
-        <div className="font-black bg-white/20 px-3 py-1 rounded-lg" style={{ fontSize: "clamp(13px, 1.3vw, 18px)" }}>{state.score} pts</div>
       </div>
 
-      <div className="flex-1 flex flex-col min-h-0" style={{ padding: "clamp(8px, 1.2vh, 14px)", background: "#f8fafc" }}>
+      <div className="flex-1 flex flex-col min-h-0" style={{ padding: "clamp(12px, 1.8vh, 22px)", background: "#f8fafc" }}>
         {allMatched ? (
           <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="flex-1 flex flex-col items-center justify-center gap-3">
             <span style={{ fontSize: "clamp(48px,8vw,96px)" }}>🎉</span>
@@ -59,10 +58,10 @@ function MatchPanel({ player, state, onSelectEnglish, onSelectIndonesian, disabl
             <p className="text-gray-400 font-bold" style={{ fontSize: "clamp(10px,1.2vw,16px)" }}>Ronde baru segera dimulai...</p>
           </motion.div>
         ) : (
-          <div className="w-full flex-1 grid grid-cols-2 min-h-0" style={{ gap: "clamp(6px, 1vw, 12px)" }}>
+          <div className="w-full flex-1 grid grid-cols-2 min-h-0" style={{ gap: "clamp(10px, 1.4vw, 18px)" }}>
             {/* Left: English words */}
-            <div className="flex flex-col min-h-0" style={{ gap: "clamp(4px, 0.8vh, 8px)" }}>
-              <p className="text-center font-bold text-gray-400 uppercase tracking-widest flex-shrink-0" style={{ fontSize: "clamp(9px,1vw,13px)" }}>🇬🇧 English</p>
+            <div className="flex flex-col min-h-0" style={{ gap: "clamp(6px, 1vh, 12px)" }}>
+              <p className="text-center font-bold text-gray-400 uppercase tracking-widest flex-shrink-0" style={{ fontSize: "clamp(10px,1.2vw,15px)" }}>🇬🇧 English</p>
               {pairs.map((pair) => {
                 const isMatched = matched.has(pair.id);
                 const isSelected = selected === pair.id;
@@ -75,9 +74,9 @@ function MatchPanel({ player, state, onSelectEnglish, onSelectIndonesian, disabl
                     onPointerDown={(e) => { e.stopPropagation(); if (!disabled && !isMatched) onSelectEnglish(pair.id); }}
                     animate={{ scale: isWrong ? [1, 0.92, 1] : isCorrect ? [1, 1.06, 1] : 1, background: isMatched ? "#d1fae5" : isSelected ? borderColor : "#f3f4f6" }}
                     transition={{ duration: 0.25 }}
-                    className="touch-btn flex-1 font-bold text-left flex items-center gap-2 shadow-sm rounded-xl border-2"
+                    className="flex-1 font-bold text-left flex items-center gap-2 shadow-sm rounded-xl border-2 active:translate-y-0.5 transition-all"
                     style={{
-                      minHeight: "clamp(40px, 6vh, 70px)",
+                      minHeight: "clamp(46px, 7vh, 82px)",
                       borderColor: isMatched ? "#10b981" : isSelected ? headerColor : isWrong ? "#ef4444" : "#e5e7eb",
                       color: isMatched ? "#059669" : isSelected ? "white" : "#374151",
                       fontSize: "clamp(11px,1.4vw,20px)",
@@ -96,7 +95,7 @@ function MatchPanel({ player, state, onSelectEnglish, onSelectIndonesian, disabl
             </div>
 
             {/* Right: Indonesian translations */}
-            <div className="flex flex-col min-h-0" style={{ gap: "clamp(4px, 0.8vh, 8px)" }}>
+            <div className="flex flex-col min-h-0" style={{ gap: "clamp(6px, 1vh, 12px)" }}>
               <p className="text-center font-bold text-gray-400 uppercase tracking-widest flex-shrink-0" style={{ fontSize: "clamp(9px,1vw,13px)" }}>🇮🇩 Indonesia</p>
               {shuffledIds.map((pid) => {
                 const pair = pairs.find((p) => p.id === pid)!;
@@ -109,9 +108,9 @@ function MatchPanel({ player, state, onSelectEnglish, onSelectIndonesian, disabl
                     onPointerDown={(e) => { e.stopPropagation(); if (!disabled && !isMatched && selected) onSelectIndonesian(pair.id); }}
                     animate={{ scale: isWrong ? [1, 0.92, 1] : 1, background: isMatched ? "#d1fae5" : "#ffffff" }}
                     transition={{ duration: 0.25 }}
-                    className="touch-btn flex-1 font-bold text-center shadow-sm rounded-xl border-2"
+                    className="flex-1 font-bold text-center shadow-sm rounded-xl border-2 active:translate-y-0.5 transition-all"
                     style={{
-                      minHeight: "clamp(40px, 6vh, 70px)",
+                      minHeight: "clamp(46px, 7vh, 82px)",
                       borderColor: isMatched ? "#10b981" : isWrong ? "#ef4444" : "#e5e7eb",
                       color: isMatched ? "#059669" : "#374151",
                       fontSize: "clamp(11px,1.4vw,20px)",
@@ -241,8 +240,30 @@ export default function EnglishMatchPage() {
         onTimerComplete={finishGame}
       />
 
+      {/* SCOREBOARD */}
+      <div className="w-full z-10 flex-shrink-0" style={{ padding: "clamp(12px, 2vh, 24px) clamp(20px, 4vw, 60px) 0" }}>
+         <div className="w-full bg-white border-2 border-gray-200 shadow-lg rounded-2xl flex flex-col" style={{ padding: "clamp(12px, 1.5vh, 20px)", gap: "clamp(8px, 1vh, 14px)" }}>
+            <div className="flex items-center gap-4 w-full">
+               <div className="w-5 h-5 rounded-full flex-shrink-0" style={{ background: "#1e3a8a" }}></div>
+               <div className="w-24 font-bold tracking-wider flex-shrink-0" style={{ fontSize: "clamp(13px, 1.3vw, 18px)", color: "#1e3a8a" }}>TIM BIRU</div>
+               <div className="flex-1 h-6 bg-[#e0f2fe] rounded-full border overflow-hidden relative shadow-inner" style={{ borderColor: "#b9ddf5" }}>
+                  <motion.div className="h-full rounded-full" style={{ background: "linear-gradient(90deg, #1e3a8a, #3b82f6)" }} animate={{ width: `${p1Pct}%` }} transition={{ type: "spring" }} />
+               </div>
+               <div className="font-bold text-center rounded-xl border-2 shadow-sm" style={{ padding: "clamp(4px, 0.6vh, 8px) clamp(10px, 1.2vw, 20px)", fontSize: "clamp(13px, 1.3vw, 18px)", color: "#1e3a8a", borderColor: "#1e3a8a", background: "#eff6ff" }}>{p1.score}</div>
+            </div>
+            <div className="flex items-center gap-4 w-full">
+               <div className="w-5 h-5 rounded-full flex-shrink-0" style={{ background: "#7f1d1d" }}></div>
+               <div className="w-24 font-bold tracking-wider flex-shrink-0" style={{ fontSize: "clamp(13px, 1.3vw, 18px)", color: "#7f1d1d" }}>TIM MERAH</div>
+               <div className="flex-1 h-6 bg-[#fef2f2] rounded-full border overflow-hidden relative shadow-inner" style={{ borderColor: "#f5c6c6" }}>
+                  <motion.div className="h-full rounded-full" style={{ background: "linear-gradient(90deg, #7f1d1d, #ef4444)" }} animate={{ width: `${p2Pct}%` }} transition={{ type: "spring" }} />
+               </div>
+               <div className="font-bold text-center rounded-xl border-2 shadow-sm" style={{ padding: "clamp(4px, 0.6vh, 8px) clamp(10px, 1.2vw, 20px)", fontSize: "clamp(13px, 1.3vw, 18px)", color: "#7f1d1d", borderColor: "#7f1d1d", background: "#fef2f2" }}>{p2.score}</div>
+            </div>
+         </div>
+      </div>
+
       {/* ── TEAM PANELS ── */}
-      <div className="flex-1 w-full z-10 flex gap-8 min-h-0" style={{ padding: "clamp(8px, 1.2vh, 14px) clamp(20px, 4vw, 60px) clamp(8px, 1.2vh, 14px)" }}>
+      <div className="flex-1 w-full z-10 flex gap-8 min-h-0" style={{ padding: "clamp(8px, 1.2vh, 14px) clamp(20px, 4vw, 60px) clamp(12px, 2vh, 24px)" }}>
         <div className="flex-1 min-w-0">
           <MatchPanel player={2} state={p2} onSelectEnglish={p2Handlers.onSelectEnglish} onSelectIndonesian={p2Handlers.onSelectIndonesian} disabled={phase !== "playing"} />
         </div>

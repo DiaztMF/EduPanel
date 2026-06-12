@@ -38,7 +38,6 @@ const STARS = Array.from({ length: 110 }, (_, i) => ({
 export default function SpaceExplorationPage() {
   const [phase, setPhase]               = useState<Phase>("intro");
   const [correct, setCorrect]           = useState<Set<string>>(new Set());
-  const [score, setScore]               = useState(0);
   const [totalAttempts, setTotalAttempts] = useState(0);
   const [wrongGuess, setWrongGuess]     = useState<string | null>(null);
   const [feedback, setFeedback]         = useState<{ type: "correct" | "wrong", msg: string } | null>(null);
@@ -62,9 +61,8 @@ export default function SpaceExplorationPage() {
       const nextCorrect = new Set([...correctRef.current, currentMoon.id]);
       correctRef.current = nextCorrect;
       setCorrect(nextCorrect);
-      setScore((s) => s + 15);
       setWrongGuess(null);
-      setFeedback({ type: "correct", msg: "+15" });
+      setFeedback({ type: "correct", msg: "BENAR!" });
       setTimeout(() => setFeedback(null), 600);
       
       // Complete check
@@ -81,7 +79,6 @@ export default function SpaceExplorationPage() {
     correctRef.current = new Set();
     setPhase("intro"); 
     setCorrect(new Set()); 
-    setScore(0); 
     setTotalAttempts(0);
     setWrongGuess(null);
     setFeedback(null);
@@ -176,26 +173,25 @@ export default function SpaceExplorationPage() {
           </svg>
 
           {/* Feedback Overlay */}
-          <AnimatePresence>
-            {feedback && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.5, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.5, y: -20 }}
-                className="absolute font-black z-30 pointer-events-none"
-                style={{
-                  top: "20%",
-                  left: "50%",
-                  transform: "translateX(-50%)",
-                  color: feedback.type === "correct" ? "#10b981" : "#ef4444",
-                  fontSize: "clamp(60px, 8vw, 100px)",
-                  filter: "drop-shadow(0 4px 10px rgba(0,0,0,0.6))",
-                }}
-              >
-                {feedback.msg}
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
+            <AnimatePresence>
+              {feedback && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.5, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.5, y: -20 }}
+                  className="font-black"
+                  style={{
+                    color: feedback.type === "correct" ? "#10b981" : "#ef4444",
+                    fontSize: "clamp(60px, 8vw, 100px)",
+                    filter: "drop-shadow(0 4px 10px rgba(0,0,0,0.6))",
+                  }}
+                >
+                  {feedback.msg}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
           {/* Planets */}
           {SOLAR_SYSTEM.map((planet, i) => {
@@ -246,7 +242,7 @@ export default function SpaceExplorationPage() {
           <div className="flex items-center justify-between text-white shadow-inner flex-shrink-0 bg-[#7f1d1d]"
             style={{ padding: "clamp(10px,1.5vh,18px) clamp(14px,2vw,24px)" }}>
             <h2 className="font-bold tracking-widest" style={{ fontSize: "clamp(11px,1.1vw,17px)" }}>TEBAK BULAN</h2>
-            <div className="font-black bg-white/20 px-3 py-1 rounded-lg" style={{ fontSize: "clamp(11px,1vw,15px)" }}>{score} pts</div>
+            <div className="font-black bg-white/20 px-3 py-1 rounded-lg" style={{ fontSize: "clamp(11px,1vw,15px)" }}>{totalAttempts} Percobaan</div>
           </div>
           
           <div className="flex-1 flex flex-col bg-[#f8fafc] p-4 relative justify-center items-center">
@@ -326,8 +322,8 @@ export default function SpaceExplorationPage() {
 
       <VictoryResultModal
         isOpen={phase === "finished"} winner={null}
-        p1Score={score} p2Score={totalAttempts}
-        p1Label={`Skor: ${score}`} p2Label={`Percobaan: ${totalAttempts}`}
+        p1Score={correctCount} p2Score={totalAttempts}
+        p1Label="Benar" p2Label="Percobaan"
         onRematch={handleReset} rematchLabel="Coba Lagi"
       />
     </div>

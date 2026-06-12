@@ -19,7 +19,7 @@ export interface Planet {
 
 export const SOLAR_SYSTEM: Planet[] = [
   {
-    id: "mercury", name: "Merkurius", emoji: "⬜", color: "#a0a0a0",
+    id: "mercury", name: "Merkurius", emoji: "🟤", color: "#a0a0a0",
     size: "clamp(22px,3.2vw,48px)", orbitRadius: 80,
     moons: [],
     fact: "Planet terkecil & terdekat dengan Matahari. Tidak memiliki bulan.",

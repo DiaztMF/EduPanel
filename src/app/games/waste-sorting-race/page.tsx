@@ -33,8 +33,9 @@ function TeamPanel({
 
   return (
     <div className="flex flex-col bg-white rounded-2xl shadow-lg border-2 overflow-hidden h-full" style={{ borderColor: color }}>
-      <div className="flex items-center justify-center text-white shadow-inner flex-shrink-0" style={{ backgroundColor: headerColor, paddingBlock: "clamp(10px, 1.5vh, 20px)" }}>
+      <div className="flex items-center justify-between text-white shadow-inner flex-shrink-0" style={{ backgroundColor: headerColor, padding: "clamp(12px, 1.5vh, 20px) clamp(20px, 3vw, 32px)" }}>
         <h2 className="font-bold tracking-widest" style={{ fontSize: "clamp(14px, 1.6vw, 22px)" }}>{title}</h2>
+        <div className="font-black bg-white/20 rounded-lg" style={{ padding: "clamp(6px, 0.8vh, 10px) clamp(12px, 1.5vw, 20px)", fontSize: "clamp(13px, 1.3vw, 18px)" }}>{score} pts</div>
       </div>
 
       <div className="flex-1 flex flex-col min-h-0 relative" style={{ padding: "clamp(12px, 1.8vh, 22px)", background: "#f8fafc", gap: "clamp(10px, 1.4vh, 18px)" }}>

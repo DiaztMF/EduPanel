@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { BOARD, getRandomQuestion, type BoardQuestion } from "@/data/board-game";
+import { BOARD, BOARD_QUESTIONS, getRandomQuestion, type BoardQuestion } from "@/data/board-game";
 import { VictoryResultModal } from "@/components/game/VictoryResultModal";
 import { GameHeader } from "@/components/game/GameHeader";
 
@@ -84,6 +84,7 @@ export default function KingOfJunglePage() {
   const [skippedTurns, setSkippedTurns] = useState<{ 1: number; 2: number }>({ 1: 0, 2: 0 });
   const [winner, setWinner] = useState<"p1" | "p2" | "draw" | null>(null);
   const [questionResult, setQuestionResult] = useState<"correct" | "wrong" | null>(null);
+  const [answeredQuestions, setAnsweredQuestions] = useState<number[]>([]);
 
   const currentPos = turn === 1 ? p1Pos : p2Pos;
   const setPos = turn === 1 ? setP1Pos : setP2Pos;
@@ -108,7 +109,7 @@ export default function KingOfJunglePage() {
     }
 
     if (tile.type === "quiz") {
-      setCurrentQuestion(getRandomQuestion());
+      setCurrentQuestion(getRandomQuestion(answeredQuestions));
       setPhase("quiz");
     } else if (tile.type === "bonus" && tile.jump) {
       setEffectMsg(`🎉 ${tile.effect ?? ""}`);
@@ -134,10 +135,10 @@ export default function KingOfJunglePage() {
     } else {
       setTimeout(nextTurn, 600);
     }
-  }, [turn, nextTurn, setPos]);
+  }, [turn, nextTurn, setPos, answeredQuestions]);
 
   const rollDice = useCallback(() => {
-    if (phase !== "rolling") return;
+    if (phase !== "rolling" || isRolling) return;
 
     // Check skip
     if (skippedTurns[turn] > 0) {
@@ -159,12 +160,18 @@ export default function KingOfJunglePage() {
       setPhase("moving");
       setTimeout(() => applyTileEffect(newPos), 600);
     }, 700);
-  }, [phase, turn, skippedTurns, currentPos, setPos, applyTileEffect, nextTurn]);
+  }, [phase, turn, skippedTurns, currentPos, setPos, applyTileEffect, nextTurn, isRolling]);
 
   const handleAnswer = (idx: number) => {
     if (!currentQuestion || phase !== "quiz") return;
     const correct = idx === currentQuestion.answer;
     setQuestionResult(correct ? "correct" : "wrong");
+
+    const qIdx = BOARD_QUESTIONS.indexOf(currentQuestion);
+    if (qIdx !== -1) {
+      setAnsweredQuestions((prev) => [...prev, qIdx]);
+    }
+
     if (correct) {
       setScore((s) => s + 10);
       setTimeout(() => { setPhase("effect"); setEffectMsg("✅ Jawaban Benar! +10 poin"); setTimeout(nextTurn, 1200); }, 700);
@@ -177,7 +184,7 @@ export default function KingOfJunglePage() {
     setPhase("intro"); setTurn(1); setP1Pos(0); setP2Pos(0);
     setP1Score(0); setP2Score(0); setDiceValue(1); setWinner(null);
     setSkippedTurns({ 1: 0, 2: 0 }); setCurrentQuestion(null); setEffectMsg("");
-    setQuestionResult(null);
+    setQuestionResult(null); setAnsweredQuestions([]);
   };
 
   const isFullscreen = () => {
@@ -188,12 +195,17 @@ export default function KingOfJunglePage() {
     }
   };
 
-  // Build board grid (5 rows × 6 cols, snake pattern)
+  // Build board grid (5 rows × 7 cols, snake pattern without overlaps)
   const tilesPerRow = 6;
-  const rows: typeof BOARD[0][][] = [];
+  const cols = 7;
+  const rows: (typeof BOARD[0] | null)[][] = [];
   for (let r = 0; r < 5; r++) {
-    const start = r * tilesPerRow;
-    const row = BOARD.slice(start, start + tilesPerRow + 1);
+    const start = r * cols;
+    const rowSlice = BOARD.slice(start, start + cols);
+    const row: (typeof BOARD[0] | null)[] = [...rowSlice];
+    while (row.length < cols) {
+      row.push(null);
+    }
     rows.push(r % 2 === 0 ? row : [...row].reverse());
   }
 
@@ -216,7 +228,7 @@ export default function KingOfJunglePage() {
             {/* Tim Biru (P1) */}
             <div className="flex items-center gap-4 w-full">
                <div className="w-5 h-5 rounded-full flex-shrink-0" style={{ background: "#1e3a8a" }}></div>
-               <div className="w-24 font-bold tracking-wider flex-shrink-0" style={{ fontSize: "clamp(13px, 1.3vw, 18px)", color: "#1e3a8a" }}>TIM BIRU</div>
+               <div className="w-28 font-bold tracking-wider flex-shrink-0 whitespace-nowrap" style={{ fontSize: "clamp(13px, 1.3vw, 18px)", color: "#1e3a8a" }}>TIM BIRU</div>
                <div className="flex-1 h-6 bg-[#e0f2fe] rounded-full border overflow-hidden relative shadow-inner" style={{ borderColor: "#b9ddf5" }}>
                   <motion.div className="h-full rounded-full" style={{ background: "linear-gradient(90deg, #1e3a8a, #3b82f6)" }} animate={{ width: `${p1Pct}%` }} transition={{ type: "spring" }} />
                </div>
@@ -229,7 +241,7 @@ export default function KingOfJunglePage() {
             {/* Tim Merah (P2) */}
             <div className="flex items-center gap-4 w-full">
                <div className="w-5 h-5 rounded-full flex-shrink-0" style={{ background: "#7f1d1d" }}></div>
-               <div className="w-24 font-bold tracking-wider flex-shrink-0" style={{ fontSize: "clamp(13px, 1.3vw, 18px)", color: "#7f1d1d" }}>TIM MERAH</div>
+               <div className="w-28 font-bold tracking-wider flex-shrink-0 whitespace-nowrap" style={{ fontSize: "clamp(13px, 1.3vw, 18px)", color: "#7f1d1d" }}>TIM MERAH</div>
                <div className="flex-1 h-6 bg-[#fef2f2] rounded-full border overflow-hidden relative shadow-inner" style={{ borderColor: "#f5c6c6" }}>
                   <motion.div className="h-full rounded-full" style={{ background: "linear-gradient(90deg, #7f1d1d, #ef4444)" }} animate={{ width: `${p2Pct}%` }} transition={{ type: "spring" }} />
                </div>
@@ -250,11 +262,16 @@ export default function KingOfJunglePage() {
           <div className="h-full grid" style={{ gridTemplateRows: "repeat(5,1fr)", gap: "clamp(8px,1.2vh,16px)" }}>
             {rows.map((row, ri) => (
               <div key={ri} className="grid" style={{ gridTemplateColumns: `repeat(${tilesPerRow + 1},1fr)`, gap: "clamp(8px,1.2vw,16px)" }}>
-                {row.map((tile) => (
-                  <Tile key={tile.id} tile={tile}
-                    p1Here={p1Pos === tile.id} p2Here={p2Pos === tile.id}
-                    highlighted={phase === "moving" && (turn === 1 ? p1Pos : p2Pos) === tile.id} />
-                ))}
+                {row.map((tile, ti) => {
+                  if (!tile) {
+                    return <div key={`empty-${ti}`} className="opacity-0 pointer-events-none" />;
+                  }
+                  return (
+                    <Tile key={tile.id} tile={tile}
+                      p1Here={p1Pos === tile.id} p2Here={p2Pos === tile.id}
+                      highlighted={phase === "moving" && (turn === 1 ? p1Pos : p2Pos) === tile.id} />
+                  );
+                })}
               </div>
             ))}
           </div>
@@ -267,7 +284,7 @@ export default function KingOfJunglePage() {
           <motion.button
             onPointerDown={rollDice}
             whileTap={{ scale: 0.88 }}
-            disabled={phase !== "rolling"}
+            disabled={phase !== "rolling" || isRolling}
             className="font-black w-full shadow-sm active:translate-y-1 transition-all"
             style={{
               background: phase === "rolling" ? "#10b981" : "#f3f4f6",

@@ -16,6 +16,8 @@ interface GameHeaderProps {
   rightSlot?: ReactNode;
 }
 
+import { Maximize, ArrowLeft } from "lucide-react";
+
 function FullscreenBtn() {
   const toggle = () => {
     if (typeof window === "undefined") return;
@@ -34,10 +36,9 @@ function FullscreenBtn() {
       style={{
         minWidth: "clamp(40px, 5vw, 64px)",
         minHeight: "clamp(40px, 5vw, 64px)",
-        fontSize: "clamp(18px, 2vw, 28px)",
       }}
     >
-      🖥️
+      <Maximize size={22} className="text-slate-600" />
     </button>
   );
 }
@@ -62,12 +63,12 @@ export function GameHeader({
         boxShadow: "0 2px 12px rgba(14,165,233,0.07)",
       }}
     >
-      {/* ── LEFT: back button or custom slot ── */}
+      {/* LEFT: back button or custom slot */}
       <div className="flex items-center" style={{ minWidth: "clamp(80px, 10vw, 140px)" }}>
         {leftSlot ?? (
           <Link
             href="/"
-            className="flex items-center gap-2 rounded-xl border border-sky-200 bg-white/80 text-gray-600 font-bold shadow-sm hover:bg-white transition-colors"
+            className="flex items-center gap-2 rounded-xl border border-sky-200 bg-white/80 text-gray-700 font-bold shadow-sm hover:bg-white transition-colors"
             style={{
               padding: "clamp(8px, 1vh, 14px) clamp(12px, 1.5vw, 20px)",
               fontSize: "clamp(12px, 1.2vw, 16px)",
@@ -75,7 +76,8 @@ export function GameHeader({
               whiteSpace: "nowrap",
             }}
           >
-            ← Menu
+            <ArrowLeft size={18} />
+            <span>Menu</span>
           </Link>
         )}
       </div>

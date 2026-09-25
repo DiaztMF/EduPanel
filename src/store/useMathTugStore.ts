@@ -1,31 +1,41 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
-import { type MathQuestion, getNextQuestion, resetQuestionPool } from "@/data/math-questions";
+import {
+  type MathDifficulty,
+  type GeneratedMathQuestion,
+  generateSymmetricMathPair,
+  generateMathQuestion,
+} from "@/lib/math-engine";
+
+export type { MathDifficulty, GeneratedMathQuestion };
 
 interface MathTugState {
-  // Rope position: -50 (P2 wins) to +50 (P1 wins), 0 = center
+  difficulty: MathDifficulty;
   ropePosition: number;
-  p1Question: MathQuestion;
-  p2Question: MathQuestion;
+  p1Question: GeneratedMathQuestion;
+  p2Question: GeneratedMathQuestion;
   lastAnswerResult: { player: 1 | 2; correct: boolean } | null;
   p1AnsweredIds: Set<string>;
   p2AnsweredIds: Set<string>;
 
-  // Actions
   submitAnswer: (player: 1 | 2, selectedAnswer: number) => boolean;
   nextQuestion: (player: 1 | 2) => void;
-  reset: () => void;
+  reset: (difficulty?: MathDifficulty) => void;
 }
 
-const ROPE_SHIFT = 10; // % per correct answer
+const ROPE_SHIFT = 10;
 const WIN_THRESHOLD = 50;
+
+const initialDifficulty: MathDifficulty = "medium";
+const initialPair = generateSymmetricMathPair(initialDifficulty);
 
 export const useMathTugStore = create<MathTugState>()(
   devtools(
     (set, get) => ({
+      difficulty: initialDifficulty,
       ropePosition: 0,
-      p1Question: getNextQuestion(),
-      p2Question: getNextQuestion(),
+      p1Question: initialPair.p1,
+      p2Question: initialPair.p2,
       lastAnswerResult: null,
       p1AnsweredIds: new Set(),
       p2AnsweredIds: new Set(),
@@ -34,18 +44,14 @@ export const useMathTugStore = create<MathTugState>()(
         const { p1Question, p2Question, ropePosition, p1AnsweredIds, p2AnsweredIds } = get();
         const currentQuestion = player === 1 ? p1Question : p2Question;
 
-        // Prevent double-answering same question by same player
         const answeredSet = player === 1 ? p1AnsweredIds : p2AnsweredIds;
         if (answeredSet.has(currentQuestion.id)) return false;
 
         const correct = selectedAnswer === currentQuestion.answer;
-
-        // Update rope position
         const delta = correct ? ROPE_SHIFT : -ROPE_SHIFT;
         const directedDelta = player === 1 ? delta : -delta;
         const newPos = Math.max(-WIN_THRESHOLD, Math.min(WIN_THRESHOLD, ropePosition + directedDelta));
 
-        // Track answered question
         const newAnsweredSet = new Set(answeredSet);
         newAnsweredSet.add(currentQuestion.id);
 
@@ -61,19 +67,23 @@ export const useMathTugStore = create<MathTugState>()(
       },
 
       nextQuestion: (player) => {
+        const { difficulty } = get();
+        const newQ = generateMathQuestion(difficulty);
         if (player === 1) {
-          set({ p1Question: getNextQuestion(), lastAnswerResult: null });
+          set({ p1Question: newQ, lastAnswerResult: null });
         } else {
-          set({ p2Question: getNextQuestion(), lastAnswerResult: null });
+          set({ p2Question: newQ, lastAnswerResult: null });
         }
       },
 
-      reset: () => {
-        resetQuestionPool();
+      reset: (newDifficulty) => {
+        const diff = newDifficulty || get().difficulty;
+        const pair = generateSymmetricMathPair(diff);
         set({
+          difficulty: diff,
           ropePosition: 0,
-          p1Question: getNextQuestion(),
-          p2Question: getNextQuestion(),
+          p1Question: pair.p1,
+          p2Question: pair.p2,
           lastAnswerResult: null,
           p1AnsweredIds: new Set(),
           p2AnsweredIds: new Set(),

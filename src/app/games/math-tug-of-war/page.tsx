@@ -5,10 +5,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useMathTugStore } from "@/store/useMathTugStore";
 import { VictoryResultModal } from "@/components/game/VictoryResultModal";
 import { GameHeader } from "@/components/game/GameHeader";
+import { GameSetupModal } from "@/components/game/GameSetupModal";
+import { SlidersHorizontal } from "lucide-react";
 
-const GAME_DURATION = 60; // seconds
-
-type Phase = "countdown" | "playing" | "finished";
+type Phase = "setup" | "countdown" | "playing" | "finished";
 
 // ─── Pixel Art Character SVG ───
 const PixelGuy = ({ color, reversed }: { color: string, reversed?: boolean }) => (
@@ -176,8 +176,9 @@ function NumpadPanel({
 export default function MathTugOfWarPage() {
   const { ropePosition, p1Question, p2Question, submitAnswer, nextQuestion, reset } = useMathTugStore();
 
-  const [phase, setPhase] = useState<Phase>("countdown");
+  const [phase, setPhase] = useState<Phase>("setup");
   const [countdown, setCountdown] = useState(3);
+  const [gameDuration, setGameDuration] = useState(60);
 
   const [p1Feedback, setP1Feedback] = useState<"correct" | "wrong" | null>(null);
   const [p2Feedback, setP2Feedback] = useState<"correct" | "wrong" | null>(null);
@@ -191,15 +192,11 @@ export default function MathTugOfWarPage() {
     if (phase !== "countdown") return;
     if (countdown <= 0) {
       setPhase("playing");
-
-      reset();
       return;
     }
     const id = setTimeout(() => setCountdown((c) => c - 1), 1000);
     return () => clearTimeout(id);
-  }, [phase, countdown, reset]);
-
-
+  }, [phase, countdown]);
 
   // Check win by rope threshold
   useEffect(() => {
@@ -242,12 +239,28 @@ export default function MathTugOfWarPage() {
   }, [phase, ropePosition]);
 
   const handleRematch = () => {
-    setPhase("countdown");
-    setCountdown(3);
+    reset();
     setP1Feedback(null);
     setP2Feedback(null);
     setWinner(null);
-    reset();
+    setPhase("countdown");
+    setCountdown(3);
+  };
+
+  const handleStartGame = ({
+    difficulty,
+    duration,
+  }: {
+    difficulty: "easy" | "medium" | "hard";
+    duration: number;
+  }) => {
+    setGameDuration(duration);
+    reset(difficulty);
+    setP1Feedback(null);
+    setP2Feedback(null);
+    setWinner(null);
+    setPhase("countdown");
+    setCountdown(3);
   };
 
   const isPlaying = phase === "playing";
@@ -259,9 +272,23 @@ export default function MathTugOfWarPage() {
       <GameHeader
         title="Tarik Tambang Matematika"
         subtitle="Math Tug-of-War"
-        timerDuration={GAME_DURATION}
+        timerDuration={gameDuration}
         isTimerRunning={phase === "playing"}
         onTimerComplete={() => finishGame()}
+        rightSlot={
+          <button
+            type="button"
+            onClick={() => setPhase("setup")}
+            aria-label="Pengaturan Permainan"
+            className="flex items-center justify-center rounded-xl border border-sky-200 bg-white/80 text-gray-700 font-bold shadow-sm hover:bg-white transition-colors"
+            style={{
+              minWidth: "clamp(40px, 5vw, 64px)",
+              minHeight: "clamp(40px, 5vw, 64px)",
+            }}
+          >
+            <SlidersHorizontal size={20} />
+          </button>
+        }
       />
 
       {/* ── MAIN CONTENT ── */}
@@ -330,6 +357,16 @@ export default function MathTugOfWarPage() {
         p1Label="Tim Biru"
         p2Label="Tim Merah"
         onRematch={handleRematch}
+      />
+
+      {/* PRE-GAME SETUP MODAL */}
+      <GameSetupModal
+        isOpen={phase === "setup"}
+        gameTitle="Tarik Tambang Matematika"
+        gameSubtitle="Math Tug-of-War"
+        defaultDifficulty="medium"
+        defaultDuration={60}
+        onStart={handleStartGame}
       />
     </div>
   );

@@ -2,27 +2,29 @@ import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { type WordChallenge, getNextWord, resetWordPool } from "@/data/word-challenges";
 
+export type WordDifficulty = WordChallenge["difficulty"];
+
 interface PinisiState {
+  difficulty: WordDifficulty;
   currentWord: WordChallenge;
-  // Per-player guessed options (Set of words they've clicked)
   p1Guessed: Set<string>;
   p2Guessed: Set<string>;
-  // How many wrong guesses each player has made for the current word
   p1Errors: number;
   p2Errors: number;
 
-  // Actions
   submitAnswer: (player: 1 | 2, option: string) => "correct" | "wrong" | "already";
   nextWord: () => void;
-  reset: () => void;
+  reset: (difficulty?: WordDifficulty) => void;
 }
 
-const MAX_ERRORS = 6; // 6 wrong guesses before word is "lost"
+const MAX_ERRORS = 6;
+const defaultDifficulty: WordDifficulty = "medium";
 
 export const usePinisiStore = create<PinisiState>()(
   devtools(
     (set, get) => ({
-      currentWord: getNextWord(),
+      difficulty: defaultDifficulty,
+      currentWord: getNextWord(defaultDifficulty),
       p1Guessed: new Set(),
       p2Guessed: new Set(),
       p1Errors: 0,
@@ -55,12 +57,26 @@ export const usePinisiStore = create<PinisiState>()(
         return isCorrect ? "correct" : "wrong";
       },
 
-      nextWord: () =>
-        set({ currentWord: getNextWord(), p1Guessed: new Set(), p2Guessed: new Set() }),
+      nextWord: () => {
+        const { difficulty } = get();
+        set({
+          currentWord: getNextWord(difficulty),
+          p1Guessed: new Set(),
+          p2Guessed: new Set(),
+        });
+      },
 
-      reset: () => {
-        resetWordPool();
-        set({ currentWord: getNextWord(), p1Guessed: new Set(), p2Guessed: new Set(), p1Errors: 0, p2Errors: 0 });
+      reset: (newDifficulty) => {
+        const diff = newDifficulty || get().difficulty;
+        resetWordPool(diff);
+        set({
+          difficulty: diff,
+          currentWord: getNextWord(diff),
+          p1Guessed: new Set(),
+          p2Guessed: new Set(),
+          p1Errors: 0,
+          p2Errors: 0,
+        });
       },
     }),
     { name: "Pinisi-Store" }

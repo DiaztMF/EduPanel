@@ -5,37 +5,53 @@ import { motion, AnimatePresence } from "framer-motion";
 import { usePinisiStore, MAX_ERRORS } from "@/store/usePinisiStore";
 import { GameHeader } from "@/components/game/GameHeader";
 import { VictoryResultModal } from "@/components/game/VictoryResultModal";
+import { GameSetupModal } from "@/components/game/GameSetupModal";
 import { CATEGORY_LABEL } from "@/data/word-challenges";
+import { Sailboat, CheckCircle2, AlertTriangle, SlidersHorizontal } from "lucide-react";
 
-const GAME_DURATION = 60;
-type Phase = "countdown" | "playing" | "finished";
-
-const SHIP_STAGES = ["⛵", "🚢", "🛥️", "🚤", "🔥", "💥", "🌊"];
+type Phase = "setup" | "countdown" | "playing" | "finished";
 
 function ShipDisplay({ errors, player }: { errors: number; player: 1 | 2 }) {
+  const livesLeft = Math.max(0, MAX_ERRORS - errors);
   const pct = Math.min(errors / MAX_ERRORS, 1);
   const color = player === 1 ? "#1e3a8a" : "#7f1d1d";
-  const stage = Math.min(errors, SHIP_STAGES.length - 1);
+  const isCritical = errors >= MAX_ERRORS - 2;
 
   return (
     <div className="flex flex-col items-center gap-2">
       <motion.div
         key={errors}
-        animate={{ rotate: errors > 0 ? [-3, 3, -2, 0] : 0, scale: errors >= MAX_ERRORS ? [1, 1.3, 0.8] : 1 }}
-        transition={{ duration: 0.4 }}
-        style={{ fontSize: "clamp(24px, 3vw, 48px)", filter: errors >= MAX_ERRORS ? "grayscale(1)" : "none" }}
+        animate={{
+          rotate: errors > 0 ? [-4, 4, -2, 0] : 0,
+          scale: errors >= MAX_ERRORS ? [1, 1.25, 0.85] : 1,
+        }}
+        transition={{ duration: 0.35 }}
+        className={`p-3 rounded-2xl flex items-center justify-center shadow-sm border-2 ${
+          errors >= MAX_ERRORS
+            ? "bg-slate-200 border-slate-300 text-slate-400"
+            : isCritical
+            ? "bg-rose-50 border-rose-300 text-rose-600 animate-pulse"
+            : player === 1
+            ? "bg-blue-50 border-blue-200 text-blue-700"
+            : "bg-red-50 border-red-200 text-red-700"
+        }`}
       >
-        {SHIP_STAGES[stage]}
+        <Sailboat size={32} />
       </motion.div>
-      <div className="rounded-full overflow-hidden border" style={{ width: "clamp(60px, 8vw, 100px)", height: "clamp(8px, 1vh, 12px)", background: "#e5e7eb", borderColor: "#d1d5db" }}>
+      <div
+        className="rounded-full overflow-hidden border border-slate-300 bg-slate-200"
+        style={{ width: "clamp(70px, 9vw, 110px)", height: "clamp(8px, 1.2vh, 14px)" }}
+      >
         <motion.div
           className="h-full rounded-full"
           animate={{ width: `${(1 - pct) * 100}%` }}
           style={{ background: color }}
-          transition={{ type: "spring", stiffness: 100 }}
+          transition={{ type: "spring", stiffness: 120 }}
         />
       </div>
-      <span className="font-bold text-gray-500" style={{ fontSize: "clamp(10px, 1vw, 14px)" }}>{MAX_ERRORS - errors} Nyawa</span>
+      <span className="font-black text-slate-600 text-xs tracking-wide">
+        {livesLeft} / {MAX_ERRORS} Daya Tahan
+      </span>
     </div>
   );
 }
@@ -78,7 +94,9 @@ function MultipleChoiceOptions({
             style={{
               minHeight: "clamp(44px, 5vh, 72px)",
               fontSize: "clamp(16px, 1.8vw, 28px)",
-              opacity: disabled && !isGuessed ? 0.7 : 1,
+              padding: "clamp(6px, 1vh, 12px)",
+              lineHeight: 1.1,
+              userSelect: "none"
             }}
           >
             {opt}
@@ -89,42 +107,54 @@ function MultipleChoiceOptions({
   );
 }
 
-function TeamPanel({ player, errors, guessed, options, answer, score, onGuess, disabled }: {
-  player: 1 | 2; errors: number; guessed: Set<string>; options: string[]; answer: string; score: number; onGuess: (l: string) => void; disabled: boolean;
+function TeamPanel({
+  player, errors, guessed, options, answer, score, onGuess, disabled
+}: {
+  player: 1 | 2; errors: number; guessed: Set<string>; options: string[]; answer: string; score: number;
+  onGuess: (l: string) => void; disabled: boolean;
 }) {
   const isP1 = player === 1;
-  const headerColor = isP1 ? "#1e1b4b" : "#7f1d1d";
-  const borderColor = isP1 ? "#1e3a8a" : "#b91c1c";
-  const teamName = isP1 ? "TIM BIRU" : "TIM MERAH";
-  const isWordDone = guessed.has(answer);
   const isGameOver = errors >= MAX_ERRORS;
+  const isWordDone = guessed.has(answer);
+
+  const headerColor = isP1 ? "#1e1b4b" : "#7f1d1d";
+  const borderColor = isP1 ? "#1e3a8a" : "#7f1d1d";
+  const teamName = isP1 ? "TIM BIRU" : "TIM MERAH";
 
   return (
-    <div className="flex flex-col bg-white rounded-2xl shadow-lg border-2 overflow-hidden w-full h-full" style={{ borderColor: borderColor }}>
-      {/* Header bar */}
-      <div className="flex items-center justify-between text-white shadow-inner flex-shrink-0" style={{ backgroundColor: headerColor, padding: "clamp(12px, 1.5vh, 20px) clamp(20px, 3vw, 32px)" }}>
-        <h2 className="font-bold tracking-widest" style={{ fontSize: "clamp(14px, 1.4vw, 22px)" }}>{teamName}</h2>
-        <div className="font-black bg-white/20 rounded-lg" style={{ padding: "clamp(6px, 0.8vh, 10px) clamp(12px, 1.5vw, 20px)", fontSize: "clamp(13px, 1.3vw, 18px)" }}>{score} pts</div>
+    <div 
+      className="flex flex-col bg-white rounded-2xl shadow-lg border-2 overflow-hidden w-full h-full"
+      style={{ borderColor: borderColor }}
+    >
+      <div 
+        className="flex items-center justify-between text-white shadow-inner flex-shrink-0"
+        style={{ 
+          backgroundColor: headerColor, 
+          padding: "clamp(8px, 1vh, 16px) clamp(16px, 2.5vw, 32px)", 
+        }}
+      >
+        <h2 className="font-bold tracking-widest" style={{ fontSize: "clamp(14px, 1.6vw, 22px)" }}>{teamName}</h2>
+        <div className="font-black bg-white/20 rounded-lg" style={{ padding: "clamp(4px, 0.6vh, 8px) clamp(10px, 1.2vw, 16px)", fontSize: "clamp(12px, 1.3vw, 18px)" }}>{score} pts</div>
       </div>
 
-      {/* Content: ship + options fills all remaining height */}
-      <div className="flex-1 flex flex-col min-h-0" style={{ padding: "clamp(10px, 1.5vh, 18px)", background: "#f8fafc", gap: "clamp(8px, 1.2vh, 14px)" }}>
-        {/* Ship status — compact, fixed height */}
-        <div className="flex justify-center items-center flex-shrink-0">
-           <ShipDisplay errors={errors} player={player} />
+      <div 
+        className="flex-1 flex flex-col min-h-0" 
+        style={{ padding: "clamp(10px, 1.5vh, 20px)", background: "#f8fafc", gap: "clamp(8px, 1.2vh, 16px)" }}
+      >
+        <div className="flex-shrink-0 flex items-center justify-center">
+          <ShipDisplay errors={errors} player={player} />
         </div>
 
-        {/* Options or result — flex-1 to fill remaining space */}
         <div className="flex-1 flex flex-col min-h-0">
           {isWordDone ? (
-            <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex-1 flex flex-col items-center justify-center">
-              <p style={{ fontSize: "clamp(48px,5vw,80px)" }}>🎉</p>
-              <p className="font-black text-[#10b981]" style={{ fontSize: "clamp(20px,2vw,36px)" }}>Berhasil!</p>
+            <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex-1 flex flex-col items-center justify-center gap-2">
+              <CheckCircle2 size={48} className="text-emerald-500" />
+              <p className="font-black text-emerald-600" style={{ fontSize: "clamp(18px, 2vw, 32px)" }}>Berhasil!</p>
             </motion.div>
           ) : isGameOver ? (
-            <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex-1 flex flex-col items-center justify-center">
-              <p style={{ fontSize: "clamp(48px,5vw,80px)" }}>💥</p>
-              <p className="font-black text-[#ef4444]" style={{ fontSize: "clamp(20px,2vw,36px)" }}>Tenggelam!</p>
+            <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex-1 flex flex-col items-center justify-center gap-2">
+              <AlertTriangle size={48} className="text-rose-500" />
+              <p className="font-black text-rose-600" style={{ fontSize: "clamp(18px, 2vw, 32px)" }}>Tenggelam!</p>
             </motion.div>
           ) : (
             <MultipleChoiceOptions
@@ -144,8 +174,9 @@ function TeamPanel({ player, errors, guessed, options, answer, score, onGuess, d
 export default function WordPinisiDuelPage() {
   const { currentWord, p1Guessed, p2Guessed, p1Errors, p2Errors, submitAnswer, nextWord, reset } = usePinisiStore();
 
-  const [phase, setPhase] = useState<Phase>("countdown");
+  const [phase, setPhase] = useState<Phase>("setup");
   const [countdown, setCountdown] = useState(3);
+  const [gameDuration, setGameDuration] = useState(60);
   const [p1Score, setP1Score] = useState(0);
   const [p2Score, setP2Score] = useState(0);
   const [winner, setWinner] = useState<"p1" | "p2" | "draw" | null>(null);
@@ -165,13 +196,12 @@ export default function WordPinisiDuelPage() {
     if (countdown <= 0) { 
       const t = setTimeout(() => {
         setPhase("playing"); 
-        reset(); 
       }, 0);
       return () => clearTimeout(t); 
     }
     const id = setTimeout(() => setCountdown((c) => c - 1), 1000);
     return () => clearTimeout(id);
-  }, [phase, countdown, reset]);
+  }, [phase, countdown]);
 
   const scoredRef = useRef<string | null>(null);
 
@@ -188,8 +218,6 @@ export default function WordPinisiDuelPage() {
     else setWinner("draw");
   }, [phase, p1Score, p2Score]);
 
-
-
   // Auto-advance
   useEffect(() => {
     if (phase !== "playing") return;
@@ -202,12 +230,10 @@ export default function WordPinisiDuelPage() {
     }
 
     if (anyAnswered) {
-      // Move to next word quickly after any answer
       const t = setTimeout(() => nextWord(), 1200);
       return () => clearTimeout(t);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [p1Done, p2Done, anyAnswered, phase, currentWord.id]);
+  }, [p1Done, p2Done, anyAnswered, phase, currentWord.id, nextWord]);
 
   const handleGuess = (player: 1 | 2, option: string) => {
     if (phase !== "playing") return;
@@ -215,7 +241,28 @@ export default function WordPinisiDuelPage() {
   };
 
   const handleRematch = () => {
-    setPhase("countdown"); setCountdown(3); setP1Score(0); setP2Score(0); setWinner(null); reset();
+    reset();
+    setP1Score(0);
+    setP2Score(0);
+    setWinner(null);
+    setPhase("countdown");
+    setCountdown(3);
+  };
+
+  const handleStartGame = ({
+    difficulty,
+    duration,
+  }: {
+    difficulty: "easy" | "medium" | "hard";
+    duration: number;
+  }) => {
+    setGameDuration(duration);
+    reset(difficulty);
+    setP1Score(0);
+    setP2Score(0);
+    setWinner(null);
+    setPhase("countdown");
+    setCountdown(3);
   };
 
   if (!isMounted) return <div className="w-full h-full bg-[#e0f2fe]" />;
@@ -227,12 +274,24 @@ export default function WordPinisiDuelPage() {
       <GameHeader
         title="Duel Pinisi Kata"
         subtitle={CATEGORY_LABEL[currentWord.category as keyof typeof CATEGORY_LABEL] ?? "Word Pinisi Duel"}
-        timerDuration={GAME_DURATION}
+        timerDuration={gameDuration}
         isTimerRunning={phase === "playing"}
         onTimerComplete={() => finishGame()}
+        rightSlot={
+          <button
+            type="button"
+            onClick={() => setPhase("setup")}
+            aria-label="Pengaturan Permainan"
+            className="flex items-center justify-center rounded-xl border border-sky-200 bg-white/80 text-gray-700 font-bold shadow-sm hover:bg-white transition-colors"
+            style={{
+              minWidth: "clamp(40px, 5vw, 64px)",
+              minHeight: "clamp(40px, 5vw, 64px)",
+            }}
+          >
+            <SlidersHorizontal size={20} />
+          </button>
+        }
       />
-
-
 
       {/* CENTER CLUE CARD */}
       <div className="w-full z-10 flex-shrink-0" style={{ padding: "clamp(12px, 1.8vh, 22px) clamp(20px, 4vw, 60px)" }}>
@@ -303,6 +362,16 @@ export default function WordPinisiDuelPage() {
       </AnimatePresence>
 
       <VictoryResultModal isOpen={phase === "finished"} winner={winner} p1Score={p1Score} p2Score={p2Score} p1Label="Tim Biru" p2Label="Tim Merah" onRematch={handleRematch} />
+
+      {/* PRE-GAME SETUP MODAL */}
+      <GameSetupModal
+        isOpen={phase === "setup"}
+        gameTitle="Duel Pinisi Kata"
+        gameSubtitle="Word Pinisi Duel"
+        defaultDifficulty="medium"
+        defaultDuration={60}
+        onStart={handleStartGame}
+      />
     </div>
   );
 }

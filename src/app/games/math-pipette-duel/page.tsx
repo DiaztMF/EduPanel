@@ -5,10 +5,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { usePipetteStore } from "@/store/usePipetteStore";
 import { VictoryResultModal } from "@/components/game/VictoryResultModal";
 import { GameHeader } from "@/components/game/GameHeader";
+import { GameSetupModal } from "@/components/game/GameSetupModal";
+import { SlidersHorizontal } from "lucide-react";
 
-const GAME_DURATION = 60;
-
-type Phase = "countdown" | "playing" | "finished";
+type Phase = "setup" | "countdown" | "playing" | "finished";
 
 function PipetteTube({ level, player }: { level: number; player: 1 | 2 }) {
   const isP1 = player === 1;
@@ -146,8 +146,9 @@ function NumpadPanel({
 export default function MathPipetteDuelPage() {
   const { p1Level, p2Level, p1Question, p2Question, p1LastResult, p2LastResult, submitAnswer, reset } = usePipetteStore();
 
-  const [phase, setPhase] = useState<Phase>("countdown");
+  const [phase, setPhase] = useState<Phase>("setup");
   const [countdown, setCountdown] = useState(3);
+  const [gameDuration, setGameDuration] = useState(60);
   const [p1Score, setP1Score] = useState(0);
   const [p2Score, setP2Score] = useState(0);
   const [winner, setWinner] = useState<"p1" | "p2" | "draw" | null>(null);
@@ -155,10 +156,10 @@ export default function MathPipetteDuelPage() {
   // Countdown
   useEffect(() => {
     if (phase !== "countdown") return;
-    if (countdown <= 0) { setPhase("playing"); reset(); return; }
+    if (countdown <= 0) { setPhase("playing"); return; }
     const id = setTimeout(() => setCountdown((c) => c - 1), 1000);
     return () => clearTimeout(id);
-  }, [phase, countdown, reset]);
+  }, [phase, countdown]);
 
   // Win by filling cylinder
   useEffect(() => {
@@ -185,7 +186,28 @@ export default function MathPipetteDuelPage() {
   };
 
   const handleRematch = () => {
-    setPhase("countdown"); setCountdown(3); setP1Score(0); setP2Score(0); setWinner(null); reset();
+    reset();
+    setP1Score(0);
+    setP2Score(0);
+    setWinner(null);
+    setPhase("countdown");
+    setCountdown(3);
+  };
+
+  const handleStartGame = ({
+    difficulty,
+    duration,
+  }: {
+    difficulty: "easy" | "medium" | "hard";
+    duration: number;
+  }) => {
+    setGameDuration(duration);
+    reset(difficulty);
+    setP1Score(0);
+    setP2Score(0);
+    setWinner(null);
+    setPhase("countdown");
+    setCountdown(3);
   };
 
   return (
@@ -195,9 +217,23 @@ export default function MathPipetteDuelPage() {
       <GameHeader
         title="Duel Pipet Matematika"
         subtitle="Math Pipette Duel"
-        timerDuration={GAME_DURATION}
+        timerDuration={gameDuration}
         isTimerRunning={phase === "playing"}
         onTimerComplete={() => finishGame()}
+        rightSlot={
+          <button
+            type="button"
+            onClick={() => setPhase("setup")}
+            aria-label="Pengaturan Permainan"
+            className="flex items-center justify-center rounded-xl border border-sky-200 bg-white/80 text-gray-700 font-bold shadow-sm hover:bg-white transition-colors"
+            style={{
+              minWidth: "clamp(40px, 5vw, 64px)",
+              minHeight: "clamp(40px, 5vw, 64px)",
+            }}
+          >
+            <SlidersHorizontal size={20} />
+          </button>
+        }
       />
 
       {/* ── MAIN CONTENT ── */}
@@ -281,6 +317,16 @@ export default function MathPipetteDuelPage() {
 
       {/* ── VICTORY MODAL ── */}
       <VictoryResultModal isOpen={phase === "finished"} winner={winner} p1Score={p1Level} p2Score={p2Level} p1Label="Tim Biru (Level)" p2Label="Tim Merah (Level)" onRematch={handleRematch} />
+
+      {/* PRE-GAME SETUP MODAL */}
+      <GameSetupModal
+        isOpen={phase === "setup"}
+        gameTitle="Duel Pipet Matematika"
+        gameSubtitle="Math Pipette Duel"
+        defaultDifficulty="medium"
+        defaultDuration={60}
+        onStart={handleStartGame}
+      />
     </div>
   );
 }

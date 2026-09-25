@@ -1,280 +1,608 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Link from "next/link";
-import { VictoryResultModal } from "@/components/game/VictoryResultModal";
+import { SlidersHorizontal, RotateCw, Layers, ShieldCheck, HelpCircle } from "lucide-react";
 import { GameHeader } from "@/components/game/GameHeader";
+import { GameSetupModal } from "@/components/game/GameSetupModal";
+import { VictoryResultModal } from "@/components/game/VictoryResultModal";
+import {
+  SHAPES_DATA,
+  generateGeometryQuestion,
+  shuffleArray,
+  type ShapeDefinition,
+  type GeometryDifficulty,
+  type GeometryQuestion,
+} from "@/data/geometry-data";
 
-type Phase = "intro" | "playing" | "finished";
-type ShapeId = "cube" | "prism" | "cylinder" | "cone" | "pyramid" | "sphere";
-type Player = 1 | 2;
+type Phase = "setup" | "countdown" | "playing" | "finished";
 
-interface Shape {
-  id: ShapeId;
-  name: string;
-  nameId: string;
-  emoji: string;
-  color: string;
-  volume: string;
-  surfaceArea: string;
-  faces: number;
-  edges: number;
-  vertices: number;
-  fun: string;
-}
-
-const SHAPES: Shape[] = [
-  { id: "cube", name: "Cube", nameId: "Kubus", emoji: "🎲", color: "#3b82f6", volume: "s³", surfaceArea: "6s²", faces: 6, edges: 12, vertices: 8, fun: "Semua rusuk sama panjang" },
-  { id: "prism", name: "Triangular Prism", nameId: "Prisma Segitiga", emoji: "🔺", color: "#10b981", volume: "½ × a × t × p", surfaceArea: "2×Atriangle + 3×Arect", faces: 5, edges: 9, vertices: 6, fun: "Penampang berbentuk segitiga" },
-  { id: "cylinder", name: "Cylinder", nameId: "Tabung/Silinder", emoji: "🥫", color: "#f59e0b", volume: "πr²t", surfaceArea: "2πr² + 2πrt", faces: 3, edges: 2, vertices: 0, fun: "2 lingkaran + 1 selimut melengkung" },
-  { id: "cone", name: "Cone", nameId: "Kerucut", emoji: "🍦", color: "#ef4444", volume: "⅓πr²t", surfaceArea: "πr² + πrs", faces: 2, edges: 1, vertices: 1, fun: "Titik puncak disebut apex" },
-  { id: "pyramid", name: "Square Pyramid", nameId: "Limas Segiempat", emoji: "🔶", color: "#8b5cf6", volume: "⅓ × s² × t", surfaceArea: "s² + 2sl", faces: 5, edges: 8, vertices: 5, fun: "Seperti piramida Mesir" },
-  { id: "sphere", name: "Sphere", nameId: "Bola", emoji: "🌐", color: "#06b6d4", volume: "⁴⁄₃πr³", surfaceArea: "4πr²", faces: 1, edges: 0, vertices: 0, fun: "Setiap titik sama jauh dari pusat" },
-];
-
-const FORMULA_CARDS = SHAPES.map((s) => [
-  { shapeId: s.id, type: "volume" as const, formula: `V = ${s.volume}`, label: "Volume" },
-  { shapeId: s.id, type: "surface" as const, formula: `SA = ${s.surfaceArea}`, label: "Luas Permukaan" },
-]).flat();
-
-// ─── 3D Shape visual ───
-function ShapeVisual({ shape, isUnfolded }: { shape: Shape; isUnfolded: boolean }) {
-  // Simple CSS-based 3D representation
-  const size = "clamp(60px,10vw,140px)";
+// ─── Crisp SVG 3D Isometric Renderers ───
+function SvgShapeVisual({ shape, isRotating }: { shape: ShapeDefinition; isRotating: boolean }) {
+  const color = shape.color;
 
   return (
     <motion.div
-      animate={{ rotateY: isUnfolded ? 0 : [0, 360], scale: isUnfolded ? 0.85 : 1 }}
-      transition={{ duration: isUnfolded ? 0.4 : 4, repeat: isUnfolded ? 0 : Infinity, ease: "linear" }}
-      className="flex flex-col items-center justify-center"
-      style={{ width: size, height: size, filter: `drop-shadow(0 0 20px ${shape.color}60)` }}
+      animate={{ scale: [0.98, 1.02, 0.98], rotateY: isRotating ? 360 : 0 }}
+      transition={{
+        scale: { duration: 3, repeat: Infinity, ease: "easeInOut" },
+        rotateY: { duration: 6, repeat: Infinity, ease: "linear" },
+      }}
+      className="w-full h-full flex items-center justify-center p-2"
     >
-      <span style={{ fontSize: "clamp(52px,8.5vw,120px)", lineHeight: 1 }}>{shape.emoji}</span>
+      <svg
+        viewBox="0 0 200 200"
+        className="w-full h-full max-w-[190px] max-h-[190px] drop-shadow-md select-none"
+      >
+        <defs>
+          <linearGradient id={`grad-${shape.id}-top`} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor={color} stopOpacity="0.95" />
+            <stop offset="100%" stopColor={color} stopOpacity="0.75" />
+          </linearGradient>
+          <linearGradient id={`grad-${shape.id}-front`} x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor={color} stopOpacity="0.8" />
+            <stop offset="100%" stopColor={color} stopOpacity="0.5" />
+          </linearGradient>
+          <linearGradient id={`grad-${shape.id}-side`} x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor={color} stopOpacity="0.6" />
+            <stop offset="100%" stopColor={color} stopOpacity="0.35" />
+          </linearGradient>
+        </defs>
+
+        {shape.id === "cube" && (
+          <g transform="translate(100, 100)">
+            {/* Top Face */}
+            <polygon points="0,-60 52,-30 0,0 -52,-30" fill={`url(#grad-${shape.id}-top)`} stroke="#1e293b" strokeWidth="2.5" strokeLinejoin="round" />
+            {/* Left Face */}
+            <polygon points="-52,-30 0,0 0,60 -52,30" fill={`url(#grad-${shape.id}-front)`} stroke="#1e293b" strokeWidth="2.5" strokeLinejoin="round" />
+            {/* Right Face */}
+            <polygon points="0,0 52,-30 52,30 0,60" fill={`url(#grad-${shape.id}-side)`} stroke="#1e293b" strokeWidth="2.5" strokeLinejoin="round" />
+          </g>
+        )}
+
+        {shape.id === "cuboid" && (
+          <g transform="translate(100, 100)">
+            {/* Top Face */}
+            <polygon points="0,-45 68,-25 0,5 -68,-15" fill={`url(#grad-${shape.id}-top)`} stroke="#1e293b" strokeWidth="2.5" strokeLinejoin="round" />
+            {/* Left Face */}
+            <polygon points="-68,-15 0,5 0,65 -68,45" fill={`url(#grad-${shape.id}-front)`} stroke="#1e293b" strokeWidth="2.5" strokeLinejoin="round" />
+            {/* Right Face */}
+            <polygon points="0,5 68,-25 68,35 0,65" fill={`url(#grad-${shape.id}-side)`} stroke="#1e293b" strokeWidth="2.5" strokeLinejoin="round" />
+          </g>
+        )}
+
+        {shape.id === "cylinder" && (
+          <g transform="translate(100, 100)">
+            {/* Body */}
+            <path d="M -50,-30 L 50,-30 L 50,45 A 50 18 0 0 1 -50 45 Z" fill={`url(#grad-${shape.id}-front)`} stroke="#1e293b" strokeWidth="2.5" />
+            {/* Top Ellipse */}
+            <ellipse cx="0" cy="-30" rx="50" ry="18" fill={`url(#grad-${shape.id}-top)`} stroke="#1e293b" strokeWidth="2.5" />
+            {/* Bottom Ellipse contour */}
+            <path d="M -50,45 A 50 18 0 0 0 50 45" fill="none" stroke="#1e293b" strokeWidth="2.5" />
+          </g>
+        )}
+
+        {shape.id === "sphere" && (
+          <g transform="translate(100, 100)">
+            {/* Sphere Body */}
+            <circle cx="0" cy="0" r="55" fill={`url(#grad-${shape.id}-top)`} stroke="#1e293b" strokeWidth="2.5" />
+            {/* Latitude Equator */}
+            <ellipse cx="0" cy="0" rx="55" ry="16" fill="none" stroke="#1e293b" strokeWidth="2" strokeDasharray="4 4" opacity="0.6" />
+            {/* Longitude Meridian */}
+            <ellipse cx="0" cy="0" rx="20" ry="55" fill="none" stroke="#1e293b" strokeWidth="2" strokeDasharray="4 4" opacity="0.6" />
+            {/* Shading highlight */}
+            <circle cx="-16" cy="-16" r="14" fill="#ffffff" opacity="0.3" />
+          </g>
+        )}
+
+        {shape.id === "cone" && (
+          <g transform="translate(100, 100)">
+            {/* Cone Body */}
+            <path d="M -50,45 L 0,-60 L 50,45 A 50 18 0 0 1 -50 45 Z" fill={`url(#grad-${shape.id}-front)`} stroke="#1e293b" strokeWidth="2.5" strokeLinejoin="round" />
+            {/* Bottom Ellipse base */}
+            <path d="M -50,45 A 50 18 0 0 0 50 45" fill="none" stroke="#1e293b" strokeWidth="2.5" />
+            {/* Apex Dot */}
+            <circle cx="0" cy="-60" r="3" fill="#1e293b" />
+          </g>
+        )}
+
+        {shape.id === "triangular_prism" && (
+          <g transform="translate(100, 100)">
+            {/* Front triangle */}
+            <polygon points="-50,45 0,10 35,45" fill={`url(#grad-${shape.id}-front)`} stroke="#1e293b" strokeWidth="2.5" strokeLinejoin="round" />
+            {/* Top roof face */}
+            <polygon points="0,10 40,-45 75,-10 35,45" fill={`url(#grad-${shape.id}-top)`} stroke="#1e293b" strokeWidth="2.5" strokeLinejoin="round" />
+            {/* Back ridge */}
+            <line x1="-50" y1="45" x2="-10" y2="-10" stroke="#1e293b" strokeWidth="2" strokeDasharray="4 4" />
+            <line x1="-10" y1="-10" x2="40" y2="-45" stroke="#1e293b" strokeWidth="2" strokeDasharray="4 4" />
+          </g>
+        )}
+
+        {shape.id === "square_pyramid" && (
+          <g transform="translate(100, 100)">
+            {/* Left triangle */}
+            <polygon points="0,-60 -55,30 0,55" fill={`url(#grad-${shape.id}-front)`} stroke="#1e293b" strokeWidth="2.5" strokeLinejoin="round" />
+            {/* Right triangle */}
+            <polygon points="0,-60 0,55 55,30" fill={`url(#grad-${shape.id}-side)`} stroke="#1e293b" strokeWidth="2.5" strokeLinejoin="round" />
+            {/* Base back edges */}
+            <line x1="-55" y1="30" x2="0" y2="5" stroke="#1e293b" strokeWidth="2" strokeDasharray="3 3" />
+            <line x1="55" y1="30" x2="0" y2="5" stroke="#1e293b" strokeWidth="2" strokeDasharray="3 3" />
+            {/* Apex */}
+            <circle cx="0" cy="-60" r="3" fill="#1e293b" />
+          </g>
+        )}
+      </svg>
     </motion.div>
   );
 }
 
-// ─── Net (jaring-jaring) unfolded view ───
-function NetView({ shape }: { shape: Shape }) {
-  const nets: Record<ShapeId, string> = {
-    cube: "🟦🟦\n🟦🟦🟦🟦\n🟦🟦",
-    prism: "🔺\n🟩🟩🟩\n🔺",
-    cylinder: "⭕\n▬▬▬\n⭕",
-    cone: "⭕\n△",
-    pyramid: "🟧\n△△△△",
-    sphere: "🌐 (tidak bisa dibuka)",
-  };
+// ─── Crisp SVG Net (Jaring-Jaring) Renderer ───
+function SvgNetVisual({ shape }: { shape: ShapeDefinition }) {
+  const color = shape.color;
 
   return (
-    <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
-      className="text-center font-mono font-bold" style={{ fontSize: "clamp(18px,2.8vw,38px)", lineHeight: 1.8, color: shape.color }}>
-      {nets[shape.id].split("\n").map((row, i) => <div key={i}>{row}</div>)}
+    <motion.div
+      initial={{ opacity: 0, scale: 0.92 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.92 }}
+      className="w-full h-full flex flex-col items-center justify-center p-2"
+    >
+      <svg
+        viewBox="0 0 200 200"
+        className="w-full h-full max-w-[190px] max-h-[190px] drop-shadow-sm select-none"
+      >
+        {shape.id === "cube" && (
+          <g transform="translate(100, 100)" fill={color} fillOpacity="0.3" stroke="#1e293b" strokeWidth="2">
+            {/* Cross net */}
+            <rect x="-15" y="-55" width="30" height="30" />
+            <rect x="-45" y="-25" width="30" height="30" />
+            <rect x="-15" y="-25" width="30" height="30" />
+            <rect x="15" y="-25" width="30" height="30" />
+            <rect x="-15" y="5" width="30" height="30" />
+            <rect x="-15" y="35" width="30" height="30" />
+          </g>
+        )}
+
+        {shape.id === "cuboid" && (
+          <g transform="translate(100, 100)" fill={color} fillOpacity="0.3" stroke="#1e293b" strokeWidth="2">
+            <rect x="-15" y="-50" width="30" height="20" />
+            <rect x="-50" y="-30" width="35" height="40" />
+            <rect x="-15" y="-30" width="30" height="40" />
+            <rect x="15" y="-30" width="35" height="40" />
+            <rect x="-15" y="10" width="30" height="20" />
+            <rect x="-15" y="30" width="30" height="40" />
+          </g>
+        )}
+
+        {shape.id === "cylinder" && (
+          <g transform="translate(100, 100)" fill={color} fillOpacity="0.3" stroke="#1e293b" strokeWidth="2">
+            {/* Top Circle */}
+            <circle cx="0" cy="-45" r="20" />
+            {/* Rectangle body */}
+            <rect x="-55" y="-20" width="110" height="45" rx="3" />
+            {/* Bottom Circle */}
+            <circle cx="0" cy="50" r="20" />
+          </g>
+        )}
+
+        {shape.id === "cone" && (
+          <g transform="translate(100, 100)" fill={color} fillOpacity="0.3" stroke="#1e293b" strokeWidth="2">
+            {/* Base Circle */}
+            <circle cx="0" cy="40" r="22" />
+            {/* Sector / Juring */}
+            <path d="M 0,-40 L -45,15 A 55 55 0 0 0 45,15 Z" />
+          </g>
+        )}
+
+        {shape.id === "triangular_prism" && (
+          <g transform="translate(100, 100)" fill={color} fillOpacity="0.3" stroke="#1e293b" strokeWidth="2">
+            {/* 3 Rectangles */}
+            <rect x="-55" y="-20" width="35" height="45" />
+            <rect x="-20" y="-20" width="40" height="45" />
+            <rect x="20" y="-20" width="35" height="45" />
+            {/* 2 Triangles */}
+            <polygon points="-20,-20 0,-50 20,-20" />
+            <polygon points="-20,25 0,55 20,25" />
+          </g>
+        )}
+
+        {shape.id === "square_pyramid" && (
+          <g transform="translate(100, 100)" fill={color} fillOpacity="0.3" stroke="#1e293b" strokeWidth="2">
+            {/* Center Square */}
+            <rect x="-22" y="-22" width="44" height="44" />
+            {/* 4 Triangles */}
+            <polygon points="-22,-22 0,-58 22,-22" />
+            <polygon points="-22,22 0,58 22,22" />
+            <polygon points="-22,-22 -58,0 -22,22" />
+            <polygon points="22,-22 58,0 22,22" />
+          </g>
+        )}
+
+        {shape.id === "sphere" && (
+          <g transform="translate(100, 100)" fill="#64748b" opacity="0.7">
+            <text x="0" y="0" textAnchor="middle" dominantBaseline="middle" className="text-[11px] font-bold" fill="#334155">
+              Tidak ada jaring datar
+            </text>
+          </g>
+        )}
+      </svg>
     </motion.div>
   );
 }
 
-// ─── Main Page ───
 export default function GeometricShapesPage() {
-  const [phase, setPhase] = useState<Phase>("intro");
-  const [selectedShape, setSelectedShape] = useState<Shape>(SHAPES[0]);
-  const [isUnfolded, setIsUnfolded] = useState(false);
-  const [p1Matched, setP1Matched] = useState<Set<string>>(new Set());
-  const [p2Matched, setP2Matched] = useState<Set<string>>(new Set());
+  const [phase, setPhase] = useState<Phase>("setup");
+  const [countdown, setCountdown] = useState(3);
+  const [difficulty, setDifficulty] = useState<GeometryDifficulty>("medium");
+  const [duration, setDuration] = useState(60);
+  const [timeLeft, setTimeLeft] = useState(60);
+
+  // Question & Round State
+  const [currentQuestion, setCurrentQuestion] = useState<GeometryQuestion>(() =>
+    generateGeometryQuestion("medium")
+  );
+  const [p1Options, setP1Options] = useState<string[]>([]);
+  const [p2Options, setP2Options] = useState<string[]>([]);
+
+  // Scores & feedback
   const [p1Score, setP1Score] = useState(0);
   const [p2Score, setP2Score] = useState(0);
   const [p1Wrong, setP1Wrong] = useState<string | null>(null);
   const [p2Wrong, setP2Wrong] = useState<string | null>(null);
+  const [p1Correct, setP1Correct] = useState<string | null>(null);
+  const [p2Correct, setP2Correct] = useState<string | null>(null);
+  const [isAdvancing, setIsAdvancing] = useState(false);
+
+  // Interactive View Mode
+  const [isUnfolded, setIsUnfolded] = useState(false);
   const [winner, setWinner] = useState<"p1" | "p2" | "draw" | null>(null);
 
-  const totalFormulas = FORMULA_CARDS.length;
-  const allMatched = p1Matched.size + p2Matched.size >= totalFormulas;
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const handleMatchFormula = (player: Player, card: typeof FORMULA_CARDS[0]) => {
+  // Prepare options for both players when question changes
+  const setupQuestionOptions = useCallback((q: GeometryQuestion) => {
+    setP1Options(shuffleArray(q.options));
+    setP2Options(shuffleArray(q.options));
+    setP1Wrong(null);
+    setP2Wrong(null);
+    setP1Correct(null);
+    setP2Correct(null);
+    setIsAdvancing(false);
+  }, []);
+
+  // Initialize first question options
+  useEffect(() => {
+    setupQuestionOptions(currentQuestion);
+  }, [currentQuestion, setupQuestionOptions]);
+
+  // Handle Game Start from Setup Modal
+  const handleStartGame = (config: { difficulty: GeometryDifficulty; duration: number }) => {
+    setDifficulty(config.difficulty);
+    setDuration(config.duration);
+    setTimeLeft(config.duration);
+    setP1Score(0);
+    setP2Score(0);
+    setWinner(null);
+    setIsUnfolded(false);
+
+    const firstQ = generateGeometryQuestion(config.difficulty);
+    setCurrentQuestion(firstQ);
+    setupQuestionOptions(firstQ);
+
+    setCountdown(3);
+    setPhase("countdown");
+  };
+
+  // Countdown 3-2-1 timer
+  useEffect(() => {
+    if (phase !== "countdown") return;
+
+    if (countdown > 0) {
+      countdownTimerRef.current = setTimeout(() => {
+        setCountdown((c) => c - 1);
+      }, 1000);
+    } else {
+      setPhase("playing");
+    }
+
+    return () => {
+      if (countdownTimerRef.current) clearTimeout(countdownTimerRef.current);
+    };
+  }, [phase, countdown]);
+
+  // Main Game Countdown Timer
+  useEffect(() => {
     if (phase !== "playing") return;
-    const isCorrect = card.shapeId === selectedShape.id;
-    const matched = player === 1 ? p1Matched : p2Matched;
-    const key = `${card.shapeId}-${card.type}`;
 
-    if (matched.has(key)) return; // already matched
+    timerRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current!);
+          setPhase("finished");
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
 
-    if (isCorrect) {
-      if (player === 1) {
-        const nm = new Set(p1Matched); nm.add(key);
-        setP1Matched(nm); setP1Score((s) => s + 10);
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [phase]);
+
+  // Determine winner when phase becomes finished
+  useEffect(() => {
+    if (phase === "finished") {
+      if (p1Score > p2Score) setWinner("p1");
+      else if (p2Score > p1Score) setWinner("p2");
+      else setWinner("draw");
+    }
+  }, [phase, p1Score, p2Score]);
+
+  // Advance to next question
+  const advanceToNext = useCallback(() => {
+    setIsAdvancing(true);
+    setTimeout(() => {
+      const nextQ = generateGeometryQuestion(difficulty, currentQuestion.shape.id);
+      setCurrentQuestion(nextQ);
+      setupQuestionOptions(nextQ);
+    }, 600);
+  }, [difficulty, currentQuestion.shape.id, setupQuestionOptions]);
+
+  // Player answer submission
+  const handleAnswer = (player: 1 | 2, option: string) => {
+    if (phase !== "playing" || isAdvancing) return;
+
+    const isCorrect = option === currentQuestion.correctAnswer;
+
+    if (player === 1) {
+      if (isCorrect) {
+        setP1Correct(option);
+        const points = p2Correct ? 5 : 10;
+        setP1Score((s) => s + points);
+        if (!p2Correct) {
+          advanceToNext();
+        }
       } else {
-        const nm = new Set(p2Matched); nm.add(key);
-        setP2Matched(nm); setP2Score((s) => s + 10);
-      }
-      if (p1Matched.size + p2Matched.size + 1 >= totalFormulas) {
-        setPhase("finished");
-        const s1 = player === 1 ? p1Score + 10 : p1Score;
-        const s2 = player === 2 ? p2Score + 10 : p2Score;
-        setWinner(s1 > s2 ? "p1" : s2 > s1 ? "p2" : "draw");
+        setP1Wrong(option);
+        setTimeout(() => setP1Wrong(null), 500);
+        setP1Score((s) => Math.max(0, s - 3));
       }
     } else {
-      if (player === 1) { setP1Wrong(key); setTimeout(() => setP1Wrong(null), 600); setP1Score((s) => Math.max(0, s - 3)); }
-      else { setP2Wrong(key); setTimeout(() => setP2Wrong(null), 600); setP2Score((s) => Math.max(0, s - 3)); }
+      if (isCorrect) {
+        setP2Correct(option);
+        const points = p1Correct ? 5 : 10;
+        setP2Score((s) => s + points);
+        if (!p1Correct) {
+          advanceToNext();
+        }
+      } else {
+        setP2Wrong(option);
+        setTimeout(() => setP2Wrong(null), 500);
+        setP2Score((s) => Math.max(0, s - 3));
+      }
     }
   };
 
-  const handleReset = () => {
-    setPhase("intro"); setSelectedShape(SHAPES[0]); setIsUnfolded(false);
-    setP1Matched(new Set()); setP2Matched(new Set());
-    setP1Score(0); setP2Score(0); setWinner(null); setP1Wrong(null); setP2Wrong(null);
+  const handleOpenSetup = () => {
+    setPhase("setup");
   };
 
-  const matchedFor = (card: typeof FORMULA_CARDS[0]) => {
-    const key = `${card.shapeId}-${card.type}`;
-    return p1Matched.has(key) || p2Matched.has(key);
-  };
-
-
-
-  // Progress logic based on a max score, e.g., total formulas * 10
-  const maxScore = totalFormulas * 10;
-  const p1Pct = Math.min(Math.max(p1Score, 0) / maxScore, 1) * 100;
-  const p2Pct = Math.min(Math.max(p2Score, 0) / maxScore, 1) * 100;
+  const targetScoreMax = Math.max(100, Math.max(p1Score, p2Score) + 20);
+  const p1Pct = Math.min((p1Score / targetScoreMax) * 100, 100);
+  const p2Pct = Math.min((p2Score / targetScoreMax) * 100, 100);
 
   return (
-    <div className="w-full h-full flex flex-col items-center bg-[#e0f2fe] relative overflow-hidden text-gray-900 font-sans">
-      
-      {/* TOP HEADER */}
+    <div className="w-full h-full flex flex-col items-center bg-[#e0f2fe] relative overflow-hidden text-gray-900 font-sans select-none">
+      {/* ── TOP HEADER ── */}
       <GameHeader
         title="Geometric Shapes"
-        subtitle="Jelajahi bangun ruang 3D & cocokkan rumusnya!"
+        subtitle="Duel Analisis Bangun Ruang 3D"
+        timerDuration={duration}
+        isTimerRunning={phase === "playing"}
+        onTimerComplete={() => setPhase("finished")}
+        rightSlot={
+          <button
+            onPointerDown={handleOpenSetup}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-sky-300 bg-white/80 hover:bg-sky-50 text-sky-800 text-xs font-bold shadow-sm transition-all"
+          >
+            <SlidersHorizontal size={14} />
+            <span>Atur Game</span>
+          </button>
+        }
       />
 
-      {/* SCOREBOARD */}
-      <div className="w-full z-10 flex-shrink-0" style={{ padding: "clamp(12px, 2vh, 24px) clamp(20px, 4vw, 60px) 0" }}>
-         <div className="w-full bg-white border-2 border-gray-200 shadow-lg rounded-2xl flex flex-col" style={{ padding: "clamp(12px, 1.5vh, 20px)", gap: "clamp(8px, 1vh, 14px)" }}>
-
-            {/* Tim Biru (P1) */}
-            <div className="flex items-center gap-4 w-full">
-               <div className="w-5 h-5 rounded-full flex-shrink-0" style={{ background: "#1e3a8a" }}></div>
-               <div className="w-28 font-bold tracking-wider flex-shrink-0" style={{ fontSize: "clamp(13px, 1.3vw, 18px)", color: "#1e3a8a" }}>TIM BIRU</div>
-               <div className="flex-1 h-6 bg-[#e0f2fe] rounded-full border overflow-hidden relative shadow-inner" style={{ borderColor: "#b9ddf5" }}>
-                  <motion.div className="h-full rounded-full" style={{ background: "linear-gradient(90deg, #1e3a8a, #3b82f6)" }} animate={{ width: `${p1Pct}%` }} transition={{ type: "spring" }} />
-               </div>
-               <div className="font-bold text-center rounded-xl border-2 shadow-sm" style={{ padding: "clamp(4px, 0.6vh, 8px) clamp(10px, 1.2vw, 20px)", fontSize: "clamp(13px, 1.3vw, 18px)", color: "#1e3a8a", borderColor: "#1e3a8a", background: "#eff6ff" }}>{p1Score}</div>
+      {/* ── SCOREBOARD DUAL BAR ── */}
+      <div className="w-full z-10 flex-shrink-0 px-4 md:px-8 pt-2">
+        <div className="w-full bg-white/95 backdrop-blur-sm border-2 border-sky-100 shadow-md rounded-2xl p-3 flex flex-col gap-2">
+          {/* Blue Team Score */}
+          <div className="flex items-center gap-3 w-full">
+            <div className="w-3.5 h-3.5 rounded-full flex-shrink-0 bg-blue-700" />
+            <div className="w-24 font-bold text-xs md:text-sm text-blue-900 tracking-wider flex-shrink-0">
+              TIM BIRU
             </div>
-
-            {/* Tim Merah (P2) */}
-            <div className="flex items-center gap-4 w-full">
-               <div className="w-5 h-5 rounded-full flex-shrink-0" style={{ background: "#7f1d1d" }}></div>
-               <div className="w-28 font-bold tracking-wider flex-shrink-0" style={{ fontSize: "clamp(13px, 1.3vw, 18px)", color: "#7f1d1d" }}>TIM MERAH</div>
-               <div className="flex-1 h-6 bg-[#fef2f2] rounded-full border overflow-hidden relative shadow-inner" style={{ borderColor: "#f5c6c6" }}>
-                  <motion.div className="h-full rounded-full" style={{ background: "linear-gradient(90deg, #7f1d1d, #ef4444)" }} animate={{ width: `${p2Pct}%` }} transition={{ type: "spring" }} />
-               </div>
-               <div className="font-bold text-center rounded-xl border-2 shadow-sm" style={{ padding: "clamp(4px, 0.6vh, 8px) clamp(10px, 1.2vw, 20px)", fontSize: "clamp(13px, 1.3vw, 18px)", color: "#7f1d1d", borderColor: "#7f1d1d", background: "#fef2f2" }}>{p2Score}</div>
+            <div className="flex-1 h-5 bg-sky-100 rounded-full border border-sky-200 overflow-hidden relative shadow-inner">
+              <motion.div
+                className="h-full rounded-full bg-gradient-to-r from-blue-700 to-sky-500"
+                animate={{ width: `${p1Pct}%` }}
+                transition={{ type: "spring", stiffness: 120, damping: 20 }}
+              />
             </div>
+            <div className="font-black text-center min-w-[50px] px-3 py-1 rounded-xl border-2 border-blue-700 bg-blue-50 text-blue-900 text-sm">
+              {p1Score}
+            </div>
+          </div>
 
-         </div>
+          {/* Red Team Score */}
+          <div className="flex items-center gap-3 w-full">
+            <div className="w-3.5 h-3.5 rounded-full flex-shrink-0 bg-rose-700" />
+            <div className="w-24 font-bold text-xs md:text-sm text-rose-900 tracking-wider flex-shrink-0">
+              TIM MERAH
+            </div>
+            <div className="flex-1 h-5 bg-rose-50 rounded-full border border-rose-200 overflow-hidden relative shadow-inner">
+              <motion.div
+                className="h-full rounded-full bg-gradient-to-r from-rose-700 to-red-500"
+                animate={{ width: `${p2Pct}%` }}
+                transition={{ type: "spring", stiffness: 120, damping: 20 }}
+              />
+            </div>
+            <div className="font-black text-center min-w-[50px] px-3 py-1 rounded-xl border-2 border-rose-700 bg-rose-50 text-rose-900 text-sm">
+              {p2Score}
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* MAIN CONTENT PANELS */}
-      <div className="flex-1 w-full z-10 flex gap-6 min-h-0" style={{ padding: "clamp(4px,0.8vh,10px) clamp(20px,4vw,60px) clamp(12px,2vh,24px)" }}>
-
-        {/* LEFT: P1 formula cards (TIM BIRU) */}
-        <div className="flex flex-col bg-white rounded-2xl shadow-lg border-2 overflow-hidden w-full h-full" style={{ borderColor: "#1e3a8a", width: "clamp(200px,25vw,300px)" }}>
-          <div className="flex items-center justify-center text-white shadow-inner relative bg-[#1e1b4b]" style={{ padding: "clamp(12px,1.8vh,22px) clamp(16px,2.5vw,32px)" }}>
-            <h2 className="font-bold tracking-widest text-center" style={{ fontSize: "clamp(16px, 1.5vw, 24px)" }}>TIM BIRU</h2>
+      {/* ── MAIN 3-COLUMN BATTLE AREA ── */}
+      <div className="flex-1 w-full z-10 flex gap-3 md:gap-5 min-h-0 px-4 md:px-8 py-3">
+        {/* LEFT COLUMN: TIM BIRU (P1 Options) */}
+        <div className="flex flex-col bg-white rounded-2xl shadow-lg border-2 border-blue-800 overflow-hidden w-64 md:w-80 flex-shrink-0">
+          <div className="flex items-center justify-between px-4 py-2.5 bg-blue-900 text-white shadow-inner">
+            <h2 className="font-black text-sm tracking-wider">TIM BIRU</h2>
+            <span className="text-[11px] font-bold text-blue-200 uppercase tracking-widest">
+              Layar Kiri
+            </span>
           </div>
-          <div className="flex-1 flex flex-col overflow-y-auto bg-[#f8fafc]" style={{ padding: "clamp(10px,1.5vh,18px)", gap: "clamp(6px,0.8vh,12px)" }}>
-            {FORMULA_CARDS.filter((_, i) => i % 2 === 0).map((card) => {
-              const key = `${card.shapeId}-${card.type}`;
-              const isMatched = matchedFor(card);
-              const isWrong = p1Wrong === key;
-              const shape = SHAPES.find((s) => s.id === card.shapeId)!;
+          <div className="flex-1 flex flex-col justify-center p-3 gap-2.5 bg-slate-50">
+            {p1Options.map((opt, idx) => {
+              const isWrong = p1Wrong === opt;
+              const isCorrect = p1Correct === opt;
               return (
-                <motion.button key={key}
-                  onPointerDown={(e) => { e.stopPropagation(); if (!isMatched) handleMatchFormula(1, card); }}
-                  animate={{ scale: isWrong ? [1, 0.9, 1] : 1, background: isMatched ? "#d1fae5" : isWrong ? "#fee2e2" : "white" }}
-                  className="text-left font-bold rounded-xl shadow-sm border-2 active:translate-y-0.5 transition-all"
-                  style={{ borderColor: isMatched ? "#10b981" : isWrong ? "#ef4444" : "#e5e7eb", color: isMatched ? "#059669" : "#374151", padding: "clamp(6px,0.9vh,12px) clamp(8px,1vw,14px)", fontSize: "clamp(12px,1.5vw,16px)", opacity: isMatched ? 0.6 : 1, textDecoration: isMatched ? "line-through" : "none", touchAction: "manipulation" }}
+                <motion.button
+                  key={`p1-opt-${idx}-${opt}`}
+                  onPointerDown={(e) => {
+                    e.stopPropagation();
+                    handleAnswer(1, opt);
+                  }}
+                  animate={{
+                    scale: isWrong ? [1, 0.95, 1] : isCorrect ? [1, 1.03, 1] : 1,
+                  }}
+                  className={`min-h-[64px] px-4 py-2 text-left font-bold text-sm md:text-base rounded-xl border-2 shadow-sm active:translate-y-0.5 transition-all flex items-center justify-between ${
+                    isCorrect
+                      ? "bg-emerald-100 border-emerald-500 text-emerald-800"
+                      : isWrong
+                      ? "bg-rose-100 border-rose-500 text-rose-800"
+                      : "bg-white border-slate-200 text-slate-800 hover:border-blue-300 hover:bg-blue-50/50"
+                  }`}
+                  style={{ touchAction: "manipulation" }}
                 >
-                  <span className="text-gray-500">{card.label}: {card.formula}</span>
+                  <span className="leading-snug">{opt}</span>
+                  {isCorrect && <ShieldCheck size={18} className="text-emerald-600 flex-shrink-0" />}
                 </motion.button>
               );
             })}
           </div>
         </div>
 
-        {/* CENTER: Shape viewer */}
-        <div className="flex-1 flex flex-col items-center justify-center gap-4 min-w-0 bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
-          {/* Shape selector */}
-          <div className="flex gap-2 flex-wrap justify-center">
-            {SHAPES.map((s) => (
-              <motion.button key={s.id}
-                onPointerDown={(e) => { e.stopPropagation(); setSelectedShape(s); setIsUnfolded(false); }}
-                animate={{ background: selectedShape.id === s.id ? `${s.color}25` : "#f3f4f6" }}
-                className="flex flex-col items-center gap-1 font-bold shadow-sm active:translate-y-0.5 transition-all"
-                style={{ border: `2px solid ${selectedShape.id === s.id ? s.color : "#e5e7eb"}`, borderRadius: "12px", padding: "clamp(6px,0.9vh,12px) clamp(10px,1.4vw,18px)", color: selectedShape.id === s.id ? s.color : "#4b5563", fontSize: "clamp(9px,1vw,13px)", touchAction: "manipulation" }}
-              >
-                <span style={{ fontSize: "clamp(18px,2.8vw,38px)" }}>{s.emoji}</span>
-                <span>{s.nameId}</span>
-              </motion.button>
-            ))}
+        {/* CENTER COLUMN: ACTIVE QUESTION & 3D SHAPE INSPECTOR */}
+        <div className="flex-1 flex flex-col items-center justify-between bg-white rounded-2xl shadow-lg border border-sky-100 p-4 min-w-0">
+          {/* Question Banner */}
+          <div className="w-full bg-sky-50 border border-sky-200 rounded-xl p-3 text-center">
+            <div className="flex items-center justify-center gap-1.5 text-sky-700 text-xs font-bold uppercase tracking-wider mb-1">
+              <HelpCircle size={14} />
+              <span>Tantangan Geometri</span>
+            </div>
+            <h3 className="font-black text-slate-800 text-base md:text-lg leading-snug">
+              {currentQuestion.prompt}
+            </h3>
           </div>
 
-          {/* Main visual + info */}
-          <div className="flex flex-col items-center gap-4 w-full border-2 border-gray-100 rounded-2xl p-6 bg-[#f8fafc]" style={{ maxWidth: "clamp(300px,50vw,600px)" }}>
+          {/* 3D Model / Net Visual Container */}
+          <div className="flex-1 w-full max-w-[360px] flex flex-col items-center justify-center relative min-h-[170px] my-2 bg-gradient-to-b from-sky-50/40 to-slate-50 border border-slate-200/80 rounded-2xl p-2">
             <AnimatePresence mode="wait">
-              {isUnfolded
-                ? <NetView key="net" shape={selectedShape} />
-                : <ShapeVisual key="3d" shape={selectedShape} isUnfolded={false} />
-              }
+              {isUnfolded ? (
+                <SvgNetVisual key="net" shape={currentQuestion.shape} />
+              ) : (
+                <SvgShapeVisual
+                  key="3d"
+                  shape={currentQuestion.shape}
+                  isRotating={phase === "playing"}
+                />
+              )}
             </AnimatePresence>
 
-            <motion.button
-              onPointerDown={(e) => { e.stopPropagation(); setIsUnfolded((v) => !v); }}
-              whileTap={{ scale: 0.92 }}
-              className="font-bold shadow-sm active:translate-y-0.5 transition-all"
-              style={{ background: `white`, color: selectedShape.color, border: `2px solid ${selectedShape.color}`, borderRadius: "12px", padding: "clamp(8px,1.2vh,16px) clamp(20px,3vw,40px)", fontSize: "clamp(11px,1.4vw,20px)", touchAction: "manipulation" }}
+            {/* Toggle 3D / Net Button */}
+            <button
+              onPointerDown={(e) => {
+                e.stopPropagation();
+                setIsUnfolded((v) => !v);
+              }}
+              className="absolute bottom-2 right-2 flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-300 bg-white/90 text-slate-700 text-xs font-bold shadow-sm hover:bg-slate-100 transition-all"
             >
-              {isUnfolded ? "🔁 3D View" : "📐 Buka Jaring-Jaring"}
-            </motion.button>
-
-            {/* Properties */}
-            <div className="grid grid-cols-3 gap-3 w-full text-center mt-2">
-              {[
-                { label: "Sisi/Bidang", value: selectedShape.faces },
-                { label: "Rusuk", value: selectedShape.edges },
-                { label: "Titik Sudut", value: selectedShape.vertices },
-              ].map((p) => (
-                <div key={p.label} className="rounded-xl py-2 bg-white shadow-sm border border-gray-200">
-                  <p className="font-black text-gray-800" style={{ fontSize: "clamp(14px,2vw,28px)" }}>{p.value}</p>
-                  <p className="font-bold text-gray-500" style={{ fontSize: "clamp(7px,0.8vw,11px)" }}>{p.label}</p>
-                </div>
-              ))}
-            </div>
-            <p className="text-gray-500 text-center font-bold" style={{ fontSize: "clamp(10px,1.2vw,14px)" }}>💡 {selectedShape.fun}</p>
+              {isUnfolded ? (
+                <>
+                  <RotateCw size={12} />
+                  <span>3D View</span>
+                </>
+              ) : (
+                <>
+                  <Layers size={12} />
+                  <span>Buka Jaring</span>
+                </>
+              )}
+            </button>
           </div>
 
-          <p className="text-gray-400 text-center font-bold" style={{ fontSize: "clamp(10px,1.2vw,14px)" }}>
-            Pilih bentuk geometri di atas, lalu cocokkan rumus volume & luasnya di panel tim kamu!
-          </p>
+          {/* Properties Badges */}
+          <div className="grid grid-cols-3 gap-2 w-full max-w-sm">
+            <div className="bg-slate-50 border border-slate-200 rounded-xl py-1.5 px-2 text-center">
+              <p className="text-base font-black text-slate-800">{currentQuestion.shape.faces}</p>
+              <p className="text-[10px] font-bold text-slate-500 uppercase">Sisi</p>
+            </div>
+            <div className="bg-slate-50 border border-slate-200 rounded-xl py-1.5 px-2 text-center">
+              <p className="text-base font-black text-slate-800">{currentQuestion.shape.edges}</p>
+              <p className="text-[10px] font-bold text-slate-500 uppercase">Rusuk</p>
+            </div>
+            <div className="bg-slate-50 border border-slate-200 rounded-xl py-1.5 px-2 text-center">
+              <p className="text-base font-black text-slate-800">
+                {currentQuestion.shape.vertices}
+              </p>
+              <p className="text-[10px] font-bold text-slate-500 uppercase">Titik Sudut</p>
+            </div>
+          </div>
+
+          {/* Educational Fact Footer */}
+          <div className="w-full mt-2 py-1.5 px-3 bg-slate-100/70 border border-slate-200 rounded-xl text-center">
+            <p className="text-xs text-slate-600 font-medium truncate">
+              {currentQuestion.shape.fact}
+            </p>
+          </div>
         </div>
 
-        {/* RIGHT: P2 formula cards (TIM MERAH) */}
-        <div className="flex flex-col bg-white rounded-2xl shadow-lg border-2 overflow-hidden w-full h-full" style={{ borderColor: "#7f1d1d", width: "clamp(200px,25vw,300px)" }}>
-          <div className="flex items-center justify-center text-white shadow-inner relative bg-[#7f1d1d]" style={{ padding: "clamp(12px,1.8vh,22px) clamp(16px,2.5vw,32px)" }}>
-            <h2 className="font-bold tracking-widest text-center" style={{ fontSize: "clamp(16px, 1.5vw, 24px)" }}>TIM MERAH</h2>
+        {/* RIGHT COLUMN: TIM MERAH (P2 Options) */}
+        <div className="flex flex-col bg-white rounded-2xl shadow-lg border-2 border-rose-800 overflow-hidden w-64 md:w-80 flex-shrink-0">
+          <div className="flex items-center justify-between px-4 py-2.5 bg-rose-900 text-white shadow-inner">
+            <span className="text-[11px] font-bold text-rose-200 uppercase tracking-widest">
+              Layar Kanan
+            </span>
+            <h2 className="font-black text-sm tracking-wider">TIM MERAH</h2>
           </div>
-          <div className="flex-1 flex flex-col overflow-y-auto bg-[#f8fafc]" style={{ padding: "clamp(10px,1.5vh,18px)", gap: "clamp(6px,0.8vh,12px)" }}>
-            {FORMULA_CARDS.filter((_, i) => i % 2 === 1).map((card) => {
-              const key = `${card.shapeId}-${card.type}`;
-              const isMatched = matchedFor(card);
-              const isWrong = p2Wrong === key;
-              const shape = SHAPES.find((s) => s.id === card.shapeId)!;
+          <div className="flex-1 flex flex-col justify-center p-3 gap-2.5 bg-slate-50">
+            {p2Options.map((opt, idx) => {
+              const isWrong = p2Wrong === opt;
+              const isCorrect = p2Correct === opt;
               return (
-                <motion.button key={key}
-                  onPointerDown={(e) => { e.stopPropagation(); if (!isMatched) handleMatchFormula(2, card); }}
-                  animate={{ scale: isWrong ? [1, 0.9, 1] : 1, background: isMatched ? "#d1fae5" : isWrong ? "#fee2e2" : "white" }}
-                  className="text-right font-bold rounded-xl shadow-sm border-2 active:translate-y-0.5 transition-all"
-                  style={{ borderColor: isMatched ? "#10b981" : isWrong ? "#ef4444" : "#e5e7eb", color: isMatched ? "#059669" : "#374151", padding: "clamp(6px,0.9vh,12px) clamp(8px,1vw,14px)", fontSize: "clamp(12px,1.5vw,16px)", opacity: isMatched ? 0.6 : 1, textDecoration: isMatched ? "line-through" : "none", touchAction: "manipulation" }}
+                <motion.button
+                  key={`p2-opt-${idx}-${opt}`}
+                  onPointerDown={(e) => {
+                    e.stopPropagation();
+                    handleAnswer(2, opt);
+                  }}
+                  animate={{
+                    scale: isWrong ? [1, 0.95, 1] : isCorrect ? [1, 1.03, 1] : 1,
+                  }}
+                  className={`min-h-[64px] px-4 py-2 text-right font-bold text-sm md:text-base rounded-xl border-2 shadow-sm active:translate-y-0.5 transition-all flex items-center justify-between ${
+                    isCorrect
+                      ? "bg-emerald-100 border-emerald-500 text-emerald-800"
+                      : isWrong
+                      ? "bg-rose-100 border-rose-500 text-rose-800"
+                      : "bg-white border-slate-200 text-slate-800 hover:border-rose-300 hover:bg-rose-50/50"
+                  }`}
+                  style={{ touchAction: "manipulation" }}
                 >
-                  <span className="text-gray-500">{card.label}: {card.formula}</span>
+                  {isCorrect && <ShieldCheck size={18} className="text-emerald-600 flex-shrink-0" />}
+                  <span className="leading-snug flex-1">{opt}</span>
                 </motion.button>
               );
             })}
@@ -282,31 +610,50 @@ export default function GeometricShapesPage() {
         </div>
       </div>
 
-      {/* INTRO OVERLAY */}
+      {/* ── PRE-GAME SETUP MODAL ── */}
+      <GameSetupModal
+        isOpen={phase === "setup"}
+        gameTitle="Geometric Shapes"
+        gameSubtitle="Pilih tingkat kesulitan bangun ruang dan durasi permainan"
+        defaultDifficulty={difficulty}
+        defaultDuration={duration}
+        onStart={handleStartGame}
+      />
+
+      {/* ── COUNTDOWN 3-2-1 OVERLAY ── */}
       <AnimatePresence>
-        {phase === "intro" && (
+        {phase === "countdown" && (
           <motion.div
-            className="absolute inset-0 z-40 flex flex-col items-center justify-center gap-6"
-            style={{ background: "rgba(224,242,254,0.95)", backdropFilter: "blur(12px)" }}
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            key="countdown-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-sky-950/70 backdrop-blur-md"
           >
-            <span style={{ fontSize: "clamp(60px,10vw,120px)" }}>🔷</span>
-            <div className="text-center">
-              <h2 className="font-black text-[#0ea5e9]" style={{ fontSize: "clamp(32px,4vw,56px)" }}>Geometric Shapes</h2>
-              <p className="text-gray-600 font-bold mt-2" style={{ fontSize: "clamp(16px,1.6vw,22px)" }}>Jelajahi bangun ruang 3D & cocokkan rumusnya!</p>
-            </div>
-            <motion.button onPointerDown={() => setPhase("playing")} whileTap={{ scale: 0.92 }}
-              className="font-black border-2 border-b-4 active:translate-y-1 transition-all"
-              style={{ background: "#3b82f6", borderColor: "#1d4ed8", color: "white", borderRadius: "16px", padding: "clamp(14px,2vh,24px) clamp(32px,5vw,64px)", fontSize: "clamp(16px,2.2vw,30px)", touchAction: "manipulation" }}>
-              🔷 Mulai Eksplorasi
-            </motion.button>
+            <motion.div
+              key={countdown}
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1.2, opacity: 1 }}
+              exit={{ scale: 1.8, opacity: 0 }}
+              transition={{ duration: 0.7, ease: "easeOut" }}
+              className="text-8xl md:text-9xl font-black text-white drop-shadow-2xl font-mono"
+            >
+              {countdown > 0 ? countdown : "MULAI!"}
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-
-
-      <VictoryResultModal isOpen={phase === "finished"} winner={winner} p1Score={p1Score} p2Score={p2Score} p1Label="Tim Biru" p2Label="Tim Merah" onRematch={handleReset} />
+      {/* ── VICTORY RESULT MODAL ── */}
+      <VictoryResultModal
+        isOpen={phase === "finished"}
+        winner={winner}
+        p1Score={p1Score}
+        p2Score={p2Score}
+        p1Label="Tim Biru"
+        p2Label="Tim Merah"
+        onRematch={() => handleStartGame({ difficulty, duration })}
+      />
     </div>
   );
 }

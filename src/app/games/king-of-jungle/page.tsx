@@ -1,77 +1,161 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Link from "next/link";
-import { BOARD, BOARD_QUESTIONS, getRandomQuestion, type BoardQuestion } from "@/data/board-game";
+import {
+  SlidersHorizontal,
+  HelpCircle,
+  Zap,
+  AlertTriangle,
+  Coffee,
+  Trophy,
+  Flag,
+  Footprints,
+  CheckCircle2,
+  XCircle,
+  Dices,
+} from "lucide-react";
+import {
+  BOARD,
+  getRandomBoardQuestion,
+  type BoardQuestion,
+  type BoardDifficulty,
+} from "@/data/board-game";
 import { VictoryResultModal } from "@/components/game/VictoryResultModal";
 import { GameHeader } from "@/components/game/GameHeader";
+import { GameSetupModal } from "@/components/game/GameSetupModal";
 
-type GamePhase = "intro" | "rolling" | "moving" | "quiz" | "effect" | "finished";
+type GamePhase = "setup" | "countdown" | "rolling" | "moving" | "quiz" | "effect" | "finished";
 
 const TOTAL_TILES = BOARD.length - 1; // 30
-const DICE_FACES = ["⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
 
-// ─── Tile component ───
-function Tile({ tile, p1Here, p2Here, highlighted }: {
-  tile: typeof BOARD[0]; p1Here: boolean; p2Here: boolean; highlighted: boolean;
-}) {
-  const bgMap = {
-    normal: "#ffffff",
-    quiz: "#dbeafe", // blue-100
-    bonus: "#d1fae5", // emerald-100
-    penalty: "#fee2e2", // red-100
-    rest: "#ffedd5", // orange-100
-    finish: "#fef08a", // yellow-200
+// ─── Crisp SVG Dice Pips Component ───
+function SvgDice({ value, rolling }: { value: number; rolling: boolean }) {
+  // Dot coordinates for 1 to 6 on a 60x60 grid
+  const pipMap: Record<number, [number, number][]> = {
+    1: [[30, 30]],
+    2: [[18, 18], [42, 42]],
+    3: [[18, 18], [30, 30], [42, 42]],
+    4: [[18, 18], [42, 18], [18, 42], [42, 42]],
+    5: [[18, 18], [42, 18], [30, 30], [18, 42], [42, 42]],
+    6: [[18, 18], [42, 18], [18, 30], [42, 30], [18, 42], [42, 42]],
   };
-  const borderMap = {
-    normal: "#e5e7eb", // gray-200
-    quiz: "#93c5fd", // blue-300
-    bonus: "#6ee7b7", // emerald-300
-    penalty: "#fca5a5", // red-300
-    rest: "#fdba74", // orange-300
-    finish: "#fde047", // yellow-300
-  };
+
+  const pips = pipMap[value] || pipMap[1];
 
   return (
     <motion.div
-      animate={{ scale: highlighted ? 1.12 : 1, boxShadow: highlighted ? "0 0 16px rgba(14,165,233,0.6)" : "0 1px 3px rgba(0,0,0,0.1)" }}
-      className="flex flex-col items-center justify-center rounded-xl relative"
-      style={{
-        background: bgMap[tile.type], border: `2px solid ${borderMap[tile.type]}`,
-        aspectRatio: "1", minWidth: 0,
-      }}
+      animate={rolling ? { rotate: [0, 180, 360, 540, 720], scale: [1, 1.25, 1] } : { rotate: 0, scale: 1 }}
+      transition={{ duration: 0.6 }}
+      className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-2xl border-4 border-slate-300 shadow-xl flex items-center justify-center p-2"
     >
-      <span style={{ fontSize: "clamp(10px,1.6vw,22px)", lineHeight: 1 }}>{tile.emoji}</span>
-      {tile.id % 5 === 0 && (
-        <span className="text-gray-400 font-bold absolute bottom-1 right-1" style={{ fontSize: "clamp(6px,0.7vw,9px)" }}>{tile.id}</span>
-      )}
-      {/* Player tokens */}
-      <div className="absolute -top-2 -right-2 flex gap-1 z-10">
-        {p1Here && <div className="rounded-full shadow-md" style={{ width: "clamp(12px,1.5vw,20px)", height: "clamp(12px,1.5vw,20px)", background: "#1e3a8a", border: "2px solid white" }} />}
-        {p2Here && <div className="rounded-full shadow-md" style={{ width: "clamp(12px,1.5vw,20px)", height: "clamp(12px,1.5vw,20px)", background: "#7f1d1d", border: "2px solid white" }} />}
-      </div>
+      <svg viewBox="0 0 60 60" className="w-full h-full">
+        {pips.map(([cx, cy], i) => (
+          <circle key={i} cx={cx} cy={cy} r={5} fill="#1e293b" />
+        ))}
+      </svg>
     </motion.div>
   );
 }
 
-// ─── Dice ───
-function DiceDisplay({ value, rolling }: { value: number; rolling: boolean }) {
+// ─── Tile component ───
+function Tile({
+  tile,
+  p1Here,
+  p2Here,
+  highlighted,
+}: {
+  tile: typeof BOARD[0];
+  p1Here: boolean;
+  p2Here: boolean;
+  highlighted: boolean;
+}) {
+  const bgMap = {
+    normal: "#ffffff",
+    quiz: "#dbeafe",
+    bonus: "#d1fae5",
+    penalty: "#fee2e2",
+    rest: "#ffedd5",
+    finish: "#fef08a",
+  };
+  const borderMap = {
+    normal: "#e2e8f0",
+    quiz: "#93c5fd",
+    bonus: "#6ee7b7",
+    penalty: "#fca5a5",
+    rest: "#fdba74",
+    finish: "#fde047",
+  };
+
+  const renderIcon = () => {
+    switch (tile.iconName) {
+      case "start":
+        return <Flag size={16} className="text-emerald-600" />;
+      case "quiz":
+        return <HelpCircle size={16} className="text-blue-600" />;
+      case "bonus":
+        return <Zap size={16} className="text-emerald-600" />;
+      case "penalty":
+        return <AlertTriangle size={16} className="text-rose-600" />;
+      case "rest":
+        return <Coffee size={16} className="text-amber-600" />;
+      case "finish":
+        return <Trophy size={16} className="text-yellow-600" />;
+      default:
+        return <Footprints size={14} className="text-slate-400" />;
+    }
+  };
+
   return (
     <motion.div
-      animate={rolling ? { rotate: [0, 180, 360, 540, 720], scale: [1, 1.2, 1] } : { rotate: 0, scale: 1 }}
-      transition={{ duration: 0.6 }}
-      className="text-gray-800"
-      style={{ fontSize: "clamp(60px,8vw,100px)", lineHeight: 1, filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.1))" }}
+      animate={{
+        scale: highlighted ? 1.12 : 1,
+        boxShadow: highlighted ? "0 0 16px rgba(14,165,233,0.6)" : "0 1px 3px rgba(0,0,0,0.1)",
+      }}
+      className="flex flex-col items-center justify-center rounded-xl relative select-none"
+      style={{
+        background: bgMap[tile.type],
+        border: `2px solid ${borderMap[tile.type]}`,
+        aspectRatio: "1",
+        minWidth: 0,
+      }}
     >
-      {DICE_FACES[value - 1] ?? "⚀"}
+      {renderIcon()}
+      {tile.id % 5 === 0 && (
+        <span
+          className="text-slate-400 font-bold absolute bottom-0.5 right-1"
+          style={{ fontSize: "clamp(6px,0.7vw,9px)" }}
+        >
+          {tile.id}
+        </span>
+      )}
+      {/* Player tokens */}
+      <div className="absolute -top-1.5 -right-1.5 flex gap-1 z-10">
+        {p1Here && (
+          <div
+            className="rounded-full shadow-md bg-blue-900 border-2 border-white"
+            style={{ width: "clamp(12px,1.4vw,18px)", height: "clamp(12px,1.4vw,18px)" }}
+          />
+        )}
+        {p2Here && (
+          <div
+            className="rounded-full shadow-md bg-rose-900 border-2 border-white"
+            style={{ width: "clamp(12px,1.4vw,18px)", height: "clamp(12px,1.4vw,18px)" }}
+          />
+        )}
+      </div>
     </motion.div>
   );
 }
 
 // ─── Main Page ───
 export default function KingOfJunglePage() {
-  const [phase, setPhase] = useState<GamePhase>("intro");
+  const [phase, setPhase] = useState<GamePhase>("setup");
+  const [countdown, setCountdown] = useState(3);
+  const [difficulty, setDifficulty] = useState<BoardDifficulty>("medium");
+  const [duration, setDuration] = useState(60);
+  const [timeLeft, setTimeLeft] = useState(60);
+
   const [turn, setTurn] = useState<1 | 2>(1);
   const [p1Pos, setP1Pos] = useState(0);
   const [p2Pos, setP2Pos] = useState(0);
@@ -81,69 +165,153 @@ export default function KingOfJunglePage() {
   const [isRolling, setIsRolling] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState<BoardQuestion | null>(null);
   const [effectMsg, setEffectMsg] = useState("");
+  const [effectIcon, setEffectIcon] = useState<"bonus" | "penalty" | "rest" | "correct" | "wrong" | null>(null);
   const [skippedTurns, setSkippedTurns] = useState<{ 1: number; 2: number }>({ 1: 0, 2: 0 });
   const [winner, setWinner] = useState<"p1" | "p2" | "draw" | null>(null);
   const [questionResult, setQuestionResult] = useState<"correct" | "wrong" | null>(null);
   const [answeredQuestions, setAnsweredQuestions] = useState<number[]>([]);
 
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   const currentPos = turn === 1 ? p1Pos : p2Pos;
   const setPos = turn === 1 ? setP1Pos : setP2Pos;
   const setScore = turn === 1 ? setP1Score : setP2Score;
 
+  // Handle Game Start from Setup Modal
+  const handleStartGame = (config: { difficulty: BoardDifficulty; duration: number }) => {
+    setDifficulty(config.difficulty);
+    setDuration(config.duration);
+    setTimeLeft(config.duration);
+    setTurn(1);
+    setP1Pos(0);
+    setP2Pos(0);
+    setP1Score(0);
+    setP2Score(0);
+    setDiceValue(1);
+    setWinner(null);
+    setSkippedTurns({ 1: 0, 2: 0 });
+    setCurrentQuestion(null);
+    setEffectMsg("");
+    setEffectIcon(null);
+    setQuestionResult(null);
+    setAnsweredQuestions([]);
+
+    setCountdown(3);
+    setPhase("countdown");
+  };
+
+  // Countdown timer
+  useEffect(() => {
+    if (phase !== "countdown") return;
+
+    if (countdown > 0) {
+      countdownTimerRef.current = setTimeout(() => {
+        setCountdown((c) => c - 1);
+      }, 1000);
+    } else {
+      setPhase("rolling");
+    }
+
+    return () => {
+      if (countdownTimerRef.current) clearTimeout(countdownTimerRef.current);
+    };
+  }, [phase, countdown]);
+
+  // Main Playing Timer
+  useEffect(() => {
+    if (phase === "setup" || phase === "countdown" || phase === "finished") return;
+
+    timerRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current!);
+          setPhase("finished");
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [phase]);
+
+  // Check finish score winner
+  useEffect(() => {
+    if (phase === "finished") {
+      if (p1Score > p2Score) setWinner("p1");
+      else if (p2Score > p1Score) setWinner("p2");
+      else setWinner("draw");
+    }
+  }, [phase, p1Score, p2Score]);
+
   const nextTurn = useCallback(() => {
-    setTurn((t) => t === 1 ? 2 : 1);
+    setTurn((t) => (t === 1 ? 2 : 1));
     setPhase("rolling");
     setCurrentQuestion(null);
     setEffectMsg("");
+    setEffectIcon(null);
     setQuestionResult(null);
   }, []);
 
-  const applyTileEffect = useCallback((pos: number) => {
-    const tile = BOARD[pos];
-    if (!tile) return;
+  const applyTileEffect = useCallback(
+    (pos: number) => {
+      const tile = BOARD[pos];
+      if (!tile) return;
 
-    if (pos >= TOTAL_TILES) {
-      setPhase("finished");
-      setWinner(turn === 1 ? "p1" : "p2");
-      return;
-    }
+      if (pos >= TOTAL_TILES) {
+        setPhase("finished");
+        setWinner(turn === 1 ? "p1" : "p2");
+        return;
+      }
 
-    if (tile.type === "quiz") {
-      setCurrentQuestion(getRandomQuestion(answeredQuestions));
-      setPhase("quiz");
-    } else if (tile.type === "bonus" && tile.jump) {
-      setEffectMsg(`🎉 ${tile.effect ?? ""}`);
-      setPhase("effect");
-      setTimeout(() => {
-        const newPos = Math.min(pos + tile.jump!, TOTAL_TILES);
-        setPos(newPos);
-        if (newPos >= TOTAL_TILES) { setPhase("finished"); setWinner(turn === 1 ? "p1" : "p2"); }
-        else { setTimeout(nextTurn, 1200); }
-      }, 1500);
-    } else if (tile.type === "penalty" && tile.jump) {
-      setEffectMsg(`😱 ${tile.effect ?? ""}`);
-      setPhase("effect");
-      setTimeout(() => {
-        setPos((p) => Math.max(0, p + tile.jump!));
-        setTimeout(nextTurn, 1200);
-      }, 1500);
-    } else if (tile.type === "rest") {
-      setEffectMsg(`💤 ${tile.effect ?? ""}`);
-      setPhase("effect");
-      setSkippedTurns((s) => ({ ...s, [turn]: 1 }));
-      setTimeout(nextTurn, 1800);
-    } else {
-      setTimeout(nextTurn, 600);
-    }
-  }, [turn, nextTurn, setPos, answeredQuestions]);
+      if (tile.type === "quiz") {
+        setCurrentQuestion(getRandomBoardQuestion(difficulty, answeredQuestions));
+        setPhase("quiz");
+      } else if (tile.type === "bonus" && tile.jump) {
+        setEffectMsg(tile.effect ?? "Maju langkah!");
+        setEffectIcon("bonus");
+        setPhase("effect");
+        setTimeout(() => {
+          const newPos = Math.min(pos + tile.jump!, TOTAL_TILES);
+          setPos(newPos);
+          if (newPos >= TOTAL_TILES) {
+            setPhase("finished");
+            setWinner(turn === 1 ? "p1" : "p2");
+          } else {
+            setTimeout(nextTurn, 1200);
+          }
+        }, 1500);
+      } else if (tile.type === "penalty" && tile.jump) {
+        setEffectMsg(tile.effect ?? "Mundur langkah!");
+        setEffectIcon("penalty");
+        setPhase("effect");
+        setTimeout(() => {
+          setPos((p) => Math.max(0, p + tile.jump!));
+          setTimeout(nextTurn, 1200);
+        }, 1500);
+      } else if (tile.type === "rest") {
+        setEffectMsg(tile.effect ?? "Istirahat!");
+        setEffectIcon("rest");
+        setPhase("effect");
+        setSkippedTurns((s) => ({ ...s, [turn]: 1 }));
+        setTimeout(nextTurn, 1800);
+      } else {
+        setTimeout(nextTurn, 600);
+      }
+    },
+    [turn, nextTurn, setPos, answeredQuestions, difficulty]
+  );
 
   const rollDice = useCallback(() => {
     if (phase !== "rolling" || isRolling) return;
 
-    // Check skip
     if (skippedTurns[turn] > 0) {
       setSkippedTurns((s) => ({ ...s, [turn]: 0 }));
-      setEffectMsg("💤 Giliran dilewati!");
+      setEffectMsg("Giliran dilewati (Istirahat)");
+      setEffectIcon("rest");
       setPhase("effect");
       setTimeout(nextTurn, 1500);
       return;
@@ -167,239 +335,293 @@ export default function KingOfJunglePage() {
     const correct = idx === currentQuestion.answer;
     setQuestionResult(correct ? "correct" : "wrong");
 
-    const qIdx = BOARD_QUESTIONS.indexOf(currentQuestion);
-    if (qIdx !== -1) {
-      setAnsweredQuestions((prev) => [...prev, qIdx]);
-    }
-
     if (correct) {
       setScore((s) => s + 10);
-      setTimeout(() => { setPhase("effect"); setEffectMsg("✅ Jawaban Benar! +10 poin"); setTimeout(nextTurn, 1200); }, 700);
+      setEffectIcon("correct");
+      setTimeout(() => {
+        setPhase("effect");
+        setEffectMsg("Jawaban Benar! +10 poin");
+        setTimeout(nextTurn, 1200);
+      }, 700);
     } else {
-      setTimeout(() => { setPhase("effect"); setEffectMsg("❌ Jawaban Salah! Tetap di tempat."); setTimeout(nextTurn, 1200); }, 700);
+      setEffectIcon("wrong");
+      setTimeout(() => {
+        setPhase("effect");
+        setEffectMsg("Jawaban Salah! Tetap di tempat.");
+        setTimeout(nextTurn, 1200);
+      }, 700);
     }
   };
 
-  const handleReset = () => {
-    setPhase("intro"); setTurn(1); setP1Pos(0); setP2Pos(0);
-    setP1Score(0); setP2Score(0); setDiceValue(1); setWinner(null);
-    setSkippedTurns({ 1: 0, 2: 0 }); setCurrentQuestion(null); setEffectMsg("");
-    setQuestionResult(null); setAnsweredQuestions([]);
-  };
-
-  const isFullscreen = () => {
-    if (typeof window !== "undefined" && document.fullscreenElement) {
-      document.exitFullscreen();
-    } else if (typeof window !== "undefined") {
-      document.documentElement.requestFullscreen().catch(() => {});
-    }
-  };
-
-  // Build board grid (5 rows × 7 cols, snake pattern without overlaps)
-  const tilesPerRow = 6;
+  // Build 5x7 snake grid
   const cols = 7;
-  const rows: (typeof BOARD[0] | null)[][] = [];
+  const gridPositions: { tile: typeof BOARD[0]; row: number; col: number }[] = [];
+  let curTile = 0;
   for (let r = 0; r < 5; r++) {
-    const start = r * cols;
-    const rowSlice = BOARD.slice(start, start + cols);
-    const row: (typeof BOARD[0] | null)[] = [...rowSlice];
-    while (row.length < cols) {
-      row.push(null);
+    const leftToRight = r % 2 === 0;
+    for (let c = 0; c < cols; c++) {
+      const colIdx = leftToRight ? c : cols - 1 - c;
+      if (curTile < BOARD.length) {
+        gridPositions.push({ tile: BOARD[curTile], row: r, col: colIdx });
+        curTile++;
+      }
     }
-    rows.push(r % 2 === 0 ? row : [...row].reverse());
   }
 
-  const p1Pct = Math.min((p1Pos / TOTAL_TILES) * 100, 100);
-  const p2Pct = Math.min((p2Pos / TOTAL_TILES) * 100, 100);
-
   return (
-    <div className="w-full h-full flex flex-col items-center bg-[#e0f2fe] relative overflow-hidden text-gray-900 font-sans">
-      
-      {/* TOP HEADER */}
+    <div className="w-full h-full flex flex-col bg-[#e0f2fe] relative overflow-hidden font-sans select-none">
+      {/* ── HEADER ── */}
       <GameHeader
         title="King of the Jungle"
-        subtitle="Board game hutan 30 petak"
+        subtitle="Jelajah Hutan Rimba Nusantara"
+        timerDuration={duration}
+        isTimerRunning={phase !== "setup" && phase !== "countdown" && phase !== "finished"}
+        onTimerComplete={() => setPhase("finished")}
+        rightSlot={
+          <button
+            onPointerDown={() => setPhase("setup")}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-sky-300 bg-white/80 hover:bg-sky-50 text-sky-800 text-xs font-bold shadow-sm transition-all"
+          >
+            <SlidersHorizontal size={14} />
+            <span>Atur Game</span>
+          </button>
+        }
       />
 
-      {/* SCOREBOARD */}
-      <div className="w-full max-w-6xl z-10 flex-shrink-0" style={{ padding: "clamp(12px, 2vh, 24px) clamp(20px, 4vw, 60px) 0" }}>
-         <div className="w-full bg-white border-2 border-gray-200 shadow-lg rounded-2xl flex flex-col" style={{ padding: "clamp(12px, 1.5vh, 20px)", gap: "clamp(8px, 1vh, 14px)" }}>
-           
-            {/* Tim Biru (P1) */}
-            <div className="flex items-center gap-4 w-full">
-               <div className="w-5 h-5 rounded-full flex-shrink-0" style={{ background: "#1e3a8a" }}></div>
-               <div className="w-28 font-bold tracking-wider flex-shrink-0 whitespace-nowrap" style={{ fontSize: "clamp(13px, 1.3vw, 18px)", color: "#1e3a8a" }}>TIM BIRU</div>
-               <div className="flex-1 h-6 bg-[#e0f2fe] rounded-full border overflow-hidden relative shadow-inner" style={{ borderColor: "#b9ddf5" }}>
-                  <motion.div className="h-full rounded-full" style={{ background: "linear-gradient(90deg, #1e3a8a, #3b82f6)" }} animate={{ width: `${p1Pct}%` }} transition={{ type: "spring" }} />
-               </div>
-               <div className="font-bold text-center rounded-xl border-2 shadow-sm flex flex-col" style={{ padding: "clamp(4px, 0.6vh, 8px) clamp(10px, 1.2vw, 20px)", fontSize: "clamp(11px, 1.1vw, 15px)", color: "#1e3a8a", borderColor: "#1e3a8a", background: "#eff6ff" }}>
-                  <span>{p1Score} pts</span>
-                  <span className="font-bold" style={{ fontSize: "clamp(9px, 0.8vw, 11px)", color: "#60a5fa" }}>Petak {p1Pos}</span>
-               </div>
+      {/* ── SCOREBOARD DUAL BAR ── */}
+      <div className="w-full z-10 flex-shrink-0 px-4 md:px-8 pt-1">
+        <div className="w-full bg-white/95 backdrop-blur-sm border-2 border-sky-100 shadow-md rounded-2xl p-2.5 flex items-center justify-between gap-4">
+          {/* P1 Status */}
+          <div
+            className={`flex items-center gap-3 px-3 py-1.5 rounded-xl border-2 transition-all ${
+              turn === 1 && phase === "rolling"
+                ? "bg-blue-50 border-blue-600 shadow-sm"
+                : "bg-slate-50 border-slate-200"
+            }`}
+          >
+            <div className="w-3.5 h-3.5 rounded-full bg-blue-700" />
+            <div>
+              <p className="font-bold text-xs text-blue-900">TIM BIRU</p>
+              <p className="text-[11px] font-semibold text-slate-500">
+                Petak: {p1Pos}/{TOTAL_TILES} • Skor: {p1Score}
+              </p>
             </div>
+          </div>
 
-            {/* Tim Merah (P2) */}
-            <div className="flex items-center gap-4 w-full">
-               <div className="w-5 h-5 rounded-full flex-shrink-0" style={{ background: "#7f1d1d" }}></div>
-               <div className="w-28 font-bold tracking-wider flex-shrink-0 whitespace-nowrap" style={{ fontSize: "clamp(13px, 1.3vw, 18px)", color: "#7f1d1d" }}>TIM MERAH</div>
-               <div className="flex-1 h-6 bg-[#fef2f2] rounded-full border overflow-hidden relative shadow-inner" style={{ borderColor: "#f5c6c6" }}>
-                  <motion.div className="h-full rounded-full" style={{ background: "linear-gradient(90deg, #7f1d1d, #ef4444)" }} animate={{ width: `${p2Pct}%` }} transition={{ type: "spring" }} />
-               </div>
-               <div className="font-bold text-center rounded-xl border-2 shadow-sm flex flex-col" style={{ padding: "clamp(4px, 0.6vh, 8px) clamp(10px, 1.2vw, 20px)", fontSize: "clamp(11px, 1.1vw, 15px)", color: "#7f1d1d", borderColor: "#7f1d1d", background: "#fef2f2" }}>
-                  <span>{p2Score} pts</span>
-                  <span className="font-bold" style={{ fontSize: "clamp(9px, 0.8vw, 11px)", color: "#f87171" }}>Petak {p2Pos}</span>
-               </div>
+          {/* Turn Indicator */}
+          <div className="text-center px-4 py-1 bg-sky-50 border border-sky-200 rounded-xl">
+            <p className="text-[10px] font-bold text-sky-700 uppercase tracking-widest">
+              Giliran Saat Ini
+            </p>
+            <p
+              className="font-black text-sm md:text-base"
+              style={{ color: turn === 1 ? "#1d4ed8" : "#be123c" }}
+            >
+              {turn === 1 ? "Tim Biru" : "Tim Merah"}
+            </p>
+          </div>
+
+          {/* P2 Status */}
+          <div
+            className={`flex items-center gap-3 px-3 py-1.5 rounded-xl border-2 transition-all ${
+              turn === 2 && phase === "rolling"
+                ? "bg-rose-50 border-rose-600 shadow-sm"
+                : "bg-slate-50 border-slate-200"
+            }`}
+          >
+            <div className="text-right">
+              <p className="font-bold text-xs text-rose-900">TIM MERAH</p>
+              <p className="text-[11px] font-semibold text-slate-500">
+                Petak: {p2Pos}/{TOTAL_TILES} • Skor: {p2Score}
+              </p>
             </div>
-
-         </div>
+            <div className="w-3.5 h-3.5 rounded-full bg-rose-700" />
+          </div>
+        </div>
       </div>
 
-      {/* MAIN: Board + Sidebar */}
-      <div className="flex-1 w-full max-w-7xl flex gap-6 min-h-0" style={{ padding: "clamp(4px,0.8vh,10px) clamp(20px,4vw,60px) clamp(12px,2vh,24px)" }}>
+      {/* ── MAIN BOARD & CONTROLS ── */}
+      <div
+        className="flex-1 w-full z-10 flex gap-4 min-h-0 px-4 md:px-8 py-2"
+      >
+        {/* Left: 30-tile trail board */}
+        <div className="flex-1 bg-white rounded-2xl shadow-lg border border-sky-100 p-3 flex flex-col justify-center min-w-0">
+          <div
+            className="grid w-full h-full gap-2"
+            style={{
+              gridTemplateColumns: `repeat(${cols}, 1fr)`,
+              gridTemplateRows: "repeat(5, 1fr)",
+            }}
+          >
+            {gridPositions.map(({ tile, row, col }) => {
+              const p1Here = p1Pos === tile.id;
+              const p2Here = p2Pos === tile.id;
+              const isCurrentTurnTile = (turn === 1 ? p1Pos : p2Pos) === tile.id;
 
-        {/* Board grid */}
-        <div className="flex-1 min-w-0 bg-white rounded-2xl shadow-lg border-2 border-gray-200" style={{ padding: "clamp(12px,1.8vh,24px)" }}>
-          <div className="h-full grid" style={{ gridTemplateRows: "repeat(5,1fr)", gap: "clamp(8px,1.2vh,16px)" }}>
-            {rows.map((row, ri) => (
-              <div key={ri} className="grid" style={{ gridTemplateColumns: `repeat(${tilesPerRow + 1},1fr)`, gap: "clamp(8px,1.2vw,16px)" }}>
-                {row.map((tile, ti) => {
-                  if (!tile) {
-                    return <div key={`empty-${ti}`} className="opacity-0 pointer-events-none" />;
-                  }
+              return (
+                <div
+                  key={tile.id}
+                  style={{ gridColumn: col + 1, gridRow: row + 1 }}
+                  className="flex items-center justify-center p-0.5"
+                >
+                  <Tile
+                    tile={tile}
+                    p1Here={p1Here}
+                    p2Here={p2Here}
+                    highlighted={isCurrentTurnTile}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Right: Dice Roll & Actions */}
+        <div className="w-64 md:w-80 flex flex-col items-center justify-center bg-white rounded-2xl shadow-lg border border-sky-100 p-4 gap-4 flex-shrink-0">
+          <p className="font-black text-slate-700 text-sm md:text-base uppercase tracking-wider text-center">
+            {phase === "rolling" ? "Silakan Lempar Dadu" : "Pergerakan Pion"}
+          </p>
+
+          <SvgDice value={diceValue} rolling={isRolling} />
+
+          <button
+            onPointerDown={rollDice}
+            disabled={phase !== "rolling" || isRolling}
+            className={`w-full min-h-[64px] px-4 py-2 font-black rounded-xl text-base md:text-lg border-2 shadow-md flex items-center justify-center gap-2 active:translate-y-0.5 transition-all ${
+              phase === "rolling" && !isRolling
+                ? turn === 1
+                  ? "bg-blue-600 hover:bg-blue-700 border-blue-800 text-white"
+                  : "bg-rose-600 hover:bg-rose-700 border-rose-800 text-white"
+                : "bg-slate-200 border-slate-300 text-slate-400 cursor-not-allowed"
+            }`}
+            style={{ touchAction: "manipulation" }}
+          >
+            <Dices size={20} />
+            <span>{isRolling ? "Mengocok Dadu..." : "Kocok Dadu"}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ── QUIZ MODAL ── */}
+      <AnimatePresence>
+        {phase === "quiz" && currentQuestion && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-40 flex items-center justify-center bg-slate-900/70 backdrop-blur-md p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-white rounded-2xl shadow-2xl border-2 border-sky-200 max-w-lg w-full p-6 flex flex-col gap-4 text-center"
+            >
+              <div className="flex items-center justify-center gap-1.5 text-blue-600 text-xs font-bold uppercase tracking-wider">
+                <HelpCircle size={16} />
+                <span>Kuis Rimba • Giliran {turn === 1 ? "Tim Biru" : "Tim Merah"}</span>
+              </div>
+
+              <h3 className="font-black text-slate-800 text-lg md:text-xl leading-snug">
+                {currentQuestion.question}
+              </h3>
+
+              <div className="flex flex-col gap-2.5 mt-2">
+                {currentQuestion.options.map((opt, idx) => {
+                  const isChosen = questionResult !== null && idx === currentQuestion.answer;
                   return (
-                    <Tile key={tile.id} tile={tile}
-                      p1Here={p1Pos === tile.id} p2Here={p2Pos === tile.id}
-                      highlighted={phase === "moving" && (turn === 1 ? p1Pos : p2Pos) === tile.id} />
+                    <button
+                      key={idx}
+                      onPointerDown={() => handleAnswer(idx)}
+                      disabled={questionResult !== null}
+                      className={`min-h-[56px] px-4 py-2 font-bold text-sm md:text-base rounded-xl border-2 shadow-sm text-left transition-all ${
+                        isChosen
+                          ? "bg-emerald-100 border-emerald-500 text-emerald-900"
+                          : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                      }`}
+                      style={{ touchAction: "manipulation" }}
+                    >
+                      {opt}
+                    </button>
                   );
                 })}
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Sidebar: Dice + actions */}
-        <div className="flex flex-col items-center justify-center gap-6 flex-shrink-0 bg-white rounded-2xl shadow-lg border-2 border-gray-200" style={{ width: "clamp(200px,20vw,280px)", padding: "clamp(14px,2vh,28px)" }}>
-          <DiceDisplay value={diceValue} rolling={isRolling} />
-
-          <motion.button
-            onPointerDown={rollDice}
-            whileTap={{ scale: 0.88 }}
-            disabled={phase !== "rolling" || isRolling}
-            className="font-black w-full shadow-sm active:translate-y-1 transition-all"
-            style={{
-              background: phase === "rolling" ? "#10b981" : "#f3f4f6",
-              color: phase === "rolling" ? "white" : "#9ca3af",
-              border: `2px solid ${phase === "rolling" ? "#059669" : "#e5e7eb"}`,
-              borderRadius: "14px",
-              fontSize: "clamp(16px,2vw,24px)",
-              padding: "16px 0",
-              boxShadow: phase === "rolling" ? "0 4px 14px rgba(16, 185, 129, 0.4)" : "none",
-              touchAction: "manipulation",
-            }}
-          >
-            {phase === "rolling" ? "🎲 Lempar Dadu" : phase === "quiz" ? "❓ Jawab Kuis" : "⏳ Tunggu..."}
-          </motion.button>
-
-          {/* Legend */}
-          <div className="flex flex-col gap-2 w-full mt-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
-            <h3 className="text-center font-bold text-gray-500 mb-2 text-sm uppercase tracking-wider">Keterangan</h3>
-            {[
-              { emoji: "❓", color: "#1e3a8a", label: "Kuis +10" },
-              { emoji: "⭐", color: "#10b981", label: "Bonus Maju" },
-              { emoji: "🌧️", color: "#ef4444", label: "Penalti Mundur" },
-              { emoji: "💤", color: "#f59e0b", label: "Istirahat" },
-              { emoji: "👑", color: "#eab308", label: "Finish!" },
-            ].map((l) => (
-              <div key={l.label} className="flex items-center gap-3 font-bold" style={{ fontSize: "clamp(12px,1.2vw,14px)" }}>
-                <span className="w-6 text-center">{l.emoji}</span>
-                <span style={{ color: l.color }}>{l.label}</span>
-              </div>
-            ))}
-            
-            {/* Turn Indicator Moved Here */}
-            <div className="mt-4 pt-4 border-t border-gray-200 w-full flex justify-center">
-              <div className="bg-white px-4 py-2 rounded-full border border-[#fdba74] shadow-sm font-bold text-gray-700 text-center" style={{ fontSize: "clamp(12px, 1.2vw, 14px)" }}>
-                {turn === 1 ? "🔵 Giliran TIM BIRU" : "🔴 Giliran TIM MERAH"}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* QUIZ OVERLAY */}
-      <AnimatePresence>
-        {phase === "quiz" && currentQuestion && (
-          <motion.div className="absolute inset-0 z-40 flex flex-col items-center justify-center gap-6"
-            style={{ background: "rgba(224,242,254,0.95)", backdropFilter: "blur(12px)", padding: "clamp(20px,4vw,60px)" }}
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <div className="bg-white rounded-3xl shadow-xl border-4 w-full max-w-4xl text-center" style={{ borderColor: turn === 1 ? "#1e3a8a" : "#7f1d1d", padding: "clamp(24px,4vh,48px)" }}>
-              <p className="font-bold mb-4 uppercase tracking-widest" style={{ color: turn === 1 ? "#1e3a8a" : "#7f1d1d", fontSize: "clamp(12px,1.5vw,18px)" }}>
-                🌿 {currentQuestion.category} · {turn === 1 ? "TIM BIRU" : "TIM MERAH"}
-              </p>
-              <p className="font-black text-gray-800" style={{ fontSize: "clamp(20px,3.5vw,48px)", lineHeight: 1.2 }}>
-                {currentQuestion.question}
-              </p>
-            </div>
-            <div className="grid grid-cols-2 gap-4 w-full max-w-4xl">
-              {currentQuestion.options.map((opt, i) => {
-                const isCorrect = i === currentQuestion.answer;
-                const flash = questionResult !== null ? (isCorrect ? "correct" : "neutral") : "idle";
-                return (
-                  <motion.button key={i}
-                    onPointerDown={() => handleAnswer(i)}
-                    animate={{ background: flash === "correct" ? "#10b981" : "white", color: flash === "correct" ? "white" : "#1f2937" }}
-                    className="font-bold shadow-md rounded-2xl active:translate-y-1 transition-all"
-                    style={{ minHeight: "clamp(64px, 10vh, 96px)", border: `4px solid ${flash === "correct" ? "#059669" : "#e5e7eb"}`, fontSize: "clamp(16px,2.5vw,32px)", touchAction: "manipulation" }}
-                    disabled={questionResult !== null}
-                  >
-                    {opt}
-                  </motion.button>
-                );
-              })}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* EFFECT OVERLAY */}
-      <AnimatePresence>
-        {phase === "effect" && effectMsg && (
-          <motion.div className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <motion.div
-              initial={{ scale: 0.5, y: 30 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 1.2, opacity: 0 }}
-              className="bg-white text-center rounded-3xl shadow-2xl border-4 border-[#0ea5e9]"
-              style={{ padding: "clamp(20px,3vh,40px) clamp(32px,5vw,80px)", fontSize: "clamp(24px,4vw,56px)", fontWeight: 900, color: "#0ea5e9" }}>
-              {effectMsg}
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* INTRO */}
+      {/* ── EFFECT MESSAGE OVERLAY ── */}
       <AnimatePresence>
-        {phase === "intro" && (
-          <motion.div className="absolute inset-0 z-40 flex flex-col items-center justify-center gap-6"
-            style={{ background: "rgba(224,242,254,0.95)", backdropFilter: "blur(12px)" }}
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <span style={{ fontSize: "clamp(60px,10vw,120px)" }}>🌿</span>
-            <div className="text-center">
-              <h2 className="font-black text-[#0ea5e9]" style={{ fontSize: "clamp(32px,4vw,56px)" }}>King of the Jungle</h2>
-              <p className="text-gray-600 font-bold mt-2" style={{ fontSize: "clamp(16px,1.6vw,22px)" }}>Board game hutan 30 petak — Lempar dadu & jawab kuis alam!</p>
-              <p className="text-gray-400 font-bold mt-1" style={{ fontSize: "clamp(12px,1.2vw,16px)" }}>Giliran bergantian · Pertama tiba di FINISH menang!</p>
-            </div>
-            <motion.button onPointerDown={() => setPhase("rolling")} whileTap={{ scale: 0.92 }}
-              className="font-black border-2 border-b-4 active:translate-y-1 transition-all"
-              style={{ background: "#10b981", borderColor: "#059669", color: "white", borderRadius: "16px", padding: "clamp(14px,2vh,24px) clamp(32px,5vw,64px)", fontSize: "clamp(16px,2.2vw,30px)", touchAction: "manipulation" }}>
-              🌿 Mulai Permainan!
-            </motion.button>
+        {phase === "effect" && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-40 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 pointer-events-none"
+          >
+            <motion.div
+              initial={{ scale: 0.8, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 1.1, opacity: 0 }}
+              className="bg-white rounded-2xl shadow-2xl border-4 border-sky-400 px-8 py-6 text-center flex flex-col items-center gap-3"
+            >
+              {effectIcon === "bonus" && <Zap size={36} className="text-emerald-500" />}
+              {effectIcon === "penalty" && <AlertTriangle size={36} className="text-rose-500" />}
+              {effectIcon === "rest" && <Coffee size={36} className="text-amber-500" />}
+              {effectIcon === "correct" && <CheckCircle2 size={36} className="text-emerald-500" />}
+              {effectIcon === "wrong" && <XCircle size={36} className="text-rose-500" />}
+
+              <p className="font-black text-xl md:text-2xl text-slate-800">{effectMsg}</p>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
+      {/* ── PRE-GAME SETUP MODAL ── */}
+      <GameSetupModal
+        isOpen={phase === "setup"}
+        gameTitle="King of the Jungle"
+        gameSubtitle="Pilih tingkat kesulitan kuis rimba dan durasi ekspedisi"
+        defaultDifficulty={difficulty}
+        defaultDuration={duration}
+        onStart={handleStartGame}
+      />
 
+      {/* ── COUNTDOWN 3-2-1 OVERLAY ── */}
+      <AnimatePresence>
+        {phase === "countdown" && (
+          <motion.div
+            key="countdown-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-950/80 backdrop-blur-md"
+          >
+            <motion.div
+              key={countdown}
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1.2, opacity: 1 }}
+              exit={{ scale: 1.8, opacity: 0 }}
+              transition={{ duration: 0.7, ease: "easeOut" }}
+              className="text-8xl md:text-9xl font-black text-white drop-shadow-2xl font-mono"
+            >
+              {countdown > 0 ? countdown : "MULAI!"}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      <VictoryResultModal isOpen={phase === "finished"} winner={winner} p1Score={p1Score} p2Score={p2Score} p1Label="Tim Biru" p2Label="Tim Merah" onRematch={handleReset} />
+      {/* ── VICTORY MODAL ── */}
+      <VictoryResultModal
+        isOpen={phase === "finished"}
+        winner={winner}
+        p1Score={p1Score}
+        p2Score={p2Score}
+        p1Label="Tim Biru"
+        p2Label="Tim Merah"
+        onRematch={() => handleStartGame({ difficulty, duration })}
+      />
     </div>
   );
 }

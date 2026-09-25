@@ -3,6 +3,7 @@ import { devtools } from "zustand/middleware";
 import { type Animal, type AnimalClass, getGameAnimals } from "@/data/animals";
 
 interface AnimalClassStore {
+  difficulty: "easy" | "medium" | "hard";
   currentAnimal: Animal | null;
   queue: Animal[];
   p1Score: number;
@@ -16,19 +17,19 @@ interface AnimalClassStore {
 
   classify: (player: 1 | 2, guess: AnimalClass) => boolean;
   nextAnimal: () => void;
-  reset: () => void;
+  reset: (difficulty?: "easy" | "medium" | "hard") => void;
 }
 
-function buildQueue(): Animal[] {
-  // Each round: use 12 animals for a slightly longer game
-  return getGameAnimals(12);
+function buildQueue(difficulty: "easy" | "medium" | "hard" = "medium"): Animal[] {
+  return getGameAnimals(12, difficulty);
 }
 
 export const useAnimalStore = create<AnimalClassStore>()(
   devtools(
     (set, get) => {
-      const initial = buildQueue();
+      const initial = buildQueue("medium");
       return {
+        difficulty: "medium",
         currentAnimal: initial[0] ?? null,
         queue: initial.slice(1),
         p1Score: 0,
@@ -62,7 +63,7 @@ export const useAnimalStore = create<AnimalClassStore>()(
             setTimeout(() => set({ p2LastResult: null }), 800);
           }
 
-          // Advance to next animal after the FIRST correct answer, giving the other player a brief window to also answer
+          // Advance to next animal after the FIRST correct answer
           if (correct && !p1Answered && !p2Answered) {
             setTimeout(() => {
               get().nextAnimal();
@@ -73,18 +74,20 @@ export const useAnimalStore = create<AnimalClassStore>()(
         },
 
         nextAnimal: () => {
-          const { queue } = get();
+          const { queue, difficulty } = get();
           if (queue.length === 0) {
-            const newQ = buildQueue();
+            const newQ = buildQueue(difficulty);
             set({ currentAnimal: newQ[0], queue: newQ.slice(1), p1Answered: false, p2Answered: false });
           } else {
             set({ currentAnimal: queue[0], queue: queue.slice(1), p1Answered: false, p2Answered: false });
           }
         },
 
-        reset: () => {
-          const fresh = buildQueue();
+        reset: (newDifficulty) => {
+          const diff = newDifficulty || get().difficulty;
+          const fresh = buildQueue(diff);
           set({ 
+            difficulty: diff,
             currentAnimal: fresh[0] ?? null, 
             queue: fresh.slice(1), 
             p1Score: 0, 
@@ -92,9 +95,9 @@ export const useAnimalStore = create<AnimalClassStore>()(
             p1LastResult: null, 
             p2LastResult: null, 
             p1LastFact: "", 
-            p2LastFact: "",
-            p1Answered: false,
-            p2Answered: false
+            p2LastFact: "", 
+            p1Answered: false, 
+            p2Answered: false 
           });
         },
       };

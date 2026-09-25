@@ -5,51 +5,92 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAnimalStore } from "@/store/useAnimalStore";
 import { GameHeader } from "@/components/game/GameHeader";
 import { VictoryResultModal } from "@/components/game/VictoryResultModal";
+import { GameSetupModal } from "@/components/game/GameSetupModal";
 import { CLASS_CONFIG, type AnimalClass } from "@/data/animals";
+import {
+  PawPrint,
+  ShieldAlert,
+  Feather,
+  Droplets,
+  Fish,
+  Bug,
+  CheckCircle,
+  XCircle,
+  SlidersHorizontal,
+} from "lucide-react";
 
-const GAME_DURATION = 60;
 const ALL_CLASSES = Object.keys(CLASS_CONFIG) as AnimalClass[];
-type Phase = "countdown" | "playing" | "finished";
+type Phase = "setup" | "countdown" | "playing" | "finished";
+
+function getCategoryIcon(key: "paw" | "shield" | "feather" | "droplet" | "fish" | "bug", size = 24) {
+  switch (key) {
+    case "paw":
+      return <PawPrint size={size} />;
+    case "shield":
+      return <ShieldAlert size={size} />;
+    case "feather":
+      return <Feather size={size} />;
+    case "droplet":
+      return <Droplets size={size} />;
+    case "fish":
+      return <Fish size={size} />;
+    case "bug":
+      return <Bug size={size} />;
+  }
+}
 
 // ─── Category Button ───
-function ClassBtn({ cls, player, onPress, lastResult, disabled }: {
-  cls: AnimalClass; player: 1 | 2; onPress: () => void;
-  lastResult: "correct" | "wrong" | null; disabled: boolean;
+function ClassBtn({
+  cls,
+  onPress,
+  disabled,
+}: {
+  cls: AnimalClass;
+  player: 1 | 2;
+  onPress: () => void;
+  lastResult: "correct" | "wrong" | null;
+  disabled: boolean;
 }) {
   const cfg = CLASS_CONFIG[cls];
-  let bgClass = "bg-[#f3f4f6]";
-  let textClass = "text-[#1f2937]";
-  let borderClass = "border-gray-300";
-
-  if (lastResult === "correct") {
-    bgClass = "bg-[#4adeab]";
-    textClass = "text-white";
-    borderClass = "border-[#10b981]";
-  } else if (lastResult === "wrong") {
-    bgClass = "bg-[#ef4444]";
-    textClass = "text-white";
-    borderClass = "border-[#b91c1c]";
-  }
+  const bgClass = "bg-[#f3f4f6]";
+  const textClass = "text-[#1f2937]";
+  const borderClass = "border-gray-300";
 
   return (
-    <motion.button
-      onPointerDown={(e) => { e.stopPropagation(); if (!disabled) onPress(); }}
-      animate={{ scale: lastResult ? [1, 1.05, 1] : 1 }}
-      transition={{ duration: 0.2 }}
-      className={`touch-btn flex flex-col items-center justify-center gap-1 font-bold w-full h-full rounded-xl border-2 border-b-4 shadow-sm active:translate-y-1 active:border-b-2 transition-all ${bgClass} ${textClass} ${borderClass}`}
-      style={{ minHeight: "clamp(50px, 6vh, 80px)", opacity: disabled && !lastResult ? 0.6 : 1, touchAction: "manipulation" }}
+    <button
+      type="button"
+      onPointerDown={(e) => {
+        e.stopPropagation();
+        if (!disabled) onPress();
+      }}
+      className={`touch-btn flex flex-col items-center justify-center gap-1.5 font-bold w-full h-full rounded-xl border-2 border-b-4 shadow-sm active:translate-y-1 active:border-b-2 transition-all ${bgClass} ${textClass} ${borderClass}`}
+      style={{
+        minHeight: "clamp(56px, 7vh, 84px)",
+        opacity: disabled ? 0.6 : 1,
+        touchAction: "manipulation",
+      }}
     >
-      <span style={{ fontSize: "clamp(20px, 2.8vw, 40px)" }}>{cfg.emoji}</span>
-      <span style={{ fontSize: "clamp(10px, 1.2vw, 16px)" }}>{cfg.label}</span>
-    </motion.button>
+      <div style={{ color: cfg.color }}>{getCategoryIcon(cfg.iconKey, 26)}</div>
+      <span style={{ fontSize: "clamp(11px, 1.3vw, 16px)" }}>{cfg.label}</span>
+    </button>
   );
 }
 
 // ─── Player Panel ───
-function TeamPanel({ player, score, lastResult, lastFact, onClassify, disabled }: {
-  player: 1 | 2; score: number;
-  lastResult: "correct" | "wrong" | null; lastFact: string;
-  onClassify: (cls: AnimalClass) => void; disabled: boolean;
+function TeamPanel({
+  player,
+  score,
+  lastResult,
+  lastFact,
+  onClassify,
+  disabled,
+}: {
+  player: 1 | 2;
+  score: number;
+  lastResult: "correct" | "wrong" | null;
+  lastFact: string;
+  onClassify: (cls: AnimalClass) => void;
+  disabled: boolean;
 }) {
   const isP1 = player === 1;
   const headerColor = isP1 ? "#1e1b4b" : "#7f1d1d";
@@ -57,21 +98,48 @@ function TeamPanel({ player, score, lastResult, lastFact, onClassify, disabled }
   const teamName = isP1 ? "TIM BIRU" : "TIM MERAH";
 
   return (
-    <div className="flex flex-col bg-white rounded-2xl shadow-lg border-2 overflow-hidden w-full h-full" style={{ borderColor: borderColor }}>
-      <div className="flex items-center justify-center text-white shadow-inner flex-shrink-0" style={{ backgroundColor: headerColor, paddingBlock: "clamp(10px, 1.5vh, 20px)" }}>
-        <h2 className="font-bold tracking-widest" style={{ fontSize: "clamp(14px, 1.4vw, 22px)" }}>{teamName}</h2>
+    <div
+      className="flex flex-col bg-white rounded-2xl shadow-lg border-2 overflow-hidden w-full h-full"
+      style={{ borderColor: borderColor }}
+    >
+      <div
+        className="flex items-center justify-center text-white shadow-inner flex-shrink-0"
+        style={{ backgroundColor: headerColor, paddingBlock: "clamp(10px, 1.5vh, 20px)" }}
+      >
+        <h2 className="font-bold tracking-widest" style={{ fontSize: "clamp(14px, 1.4vw, 22px)" }}>
+          {teamName}
+        </h2>
       </div>
 
-      <div className="flex-1 flex flex-col min-h-0" style={{ padding: "clamp(12px, 1.8vh, 22px)", background: "#f8fafc", gap: "clamp(8px, 1.2vh, 16px)" }}>
+      <div
+        className="flex-1 flex flex-col min-h-0"
+        style={{ padding: "clamp(12px, 1.8vh, 22px)", background: "#f8fafc", gap: "clamp(8px, 1.2vh, 16px)" }}
+      >
         <div className="flex-shrink-0" style={{ minHeight: "clamp(28px, 3.5vh, 44px)" }}>
           <AnimatePresence mode="wait">
             {lastResult && lastFact && (
-              <motion.div key={lastFact + lastResult}
-                initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-                className="rounded-xl text-center shadow-sm w-full"
-                style={{ padding: "clamp(6px, 0.8vh, 12px) clamp(10px, 1.2vw, 18px)", background: lastResult === "correct" ? "#d1fae5" : "#fee2e2", border: `1px solid ${lastResult === "correct" ? "#34d399" : "#f87171"}` }}>
-                <p className="font-bold" style={{ fontSize: "clamp(10px, 1.1vw, 14px)", color: lastResult === "correct" ? "#059669" : "#b91c1c" }}>
-                  {lastResult === "correct" ? "✅ Benar! +10" : "❌ Salah! -3"} · {lastFact}
+              <motion.div
+                key={lastFact + lastResult}
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                className="rounded-xl flex items-center justify-center gap-2 shadow-sm w-full"
+                style={{
+                  padding: "clamp(6px, 0.8vh, 12px) clamp(10px, 1.2vw, 18px)",
+                  background: lastResult === "correct" ? "#d1fae5" : "#fee2e2",
+                  border: `1px solid ${lastResult === "correct" ? "#34d399" : "#f87171"}`,
+                }}
+              >
+                {lastResult === "correct" ? (
+                  <CheckCircle size={18} className="text-emerald-600 flex-shrink-0" />
+                ) : (
+                  <XCircle size={18} className="text-rose-600 flex-shrink-0" />
+                )}
+                <p
+                  className="font-bold text-xs sm:text-sm"
+                  style={{ color: lastResult === "correct" ? "#059669" : "#b91c1c" }}
+                >
+                  {lastResult === "correct" ? "Benar! +10" : "Salah! -3"} | {lastFact}
                 </p>
               </motion.div>
             )}
@@ -80,10 +148,14 @@ function TeamPanel({ player, score, lastResult, lastFact, onClassify, disabled }
 
         <div className="w-full grid grid-cols-3 flex-1 min-h-0" style={{ gap: "clamp(8px, 1.2vh, 16px)" }}>
           {ALL_CLASSES.map((cls) => (
-            <ClassBtn key={cls} cls={cls} player={player}
+            <ClassBtn
+              key={cls}
+              cls={cls}
+              player={player}
               onPress={() => onClassify(cls)}
               lastResult={null}
-              disabled={disabled} />
+              disabled={disabled}
+            />
           ))}
         </div>
       </div>
@@ -93,19 +165,33 @@ function TeamPanel({ player, score, lastResult, lastFact, onClassify, disabled }
 
 // ─── Main Page ───
 export default function AnimalClassificationPage() {
-  const { currentAnimal, p1Score, p2Score, p1LastResult, p2LastResult, p1LastFact, p2LastFact, classify, reset } = useAnimalStore();
+  const {
+    currentAnimal,
+    p1Score,
+    p2Score,
+    p1LastResult,
+    p2LastResult,
+    p1LastFact,
+    p2LastFact,
+    classify,
+    reset,
+  } = useAnimalStore();
 
-  const [phase, setPhase] = useState<Phase>("countdown");
+  const [phase, setPhase] = useState<Phase>("setup");
   const [countdown, setCountdown] = useState(3);
+  const [gameDuration, setGameDuration] = useState(60);
   const [winner, setWinner] = useState<"p1" | "p2" | "draw" | null>(null);
 
   // Countdown
   useEffect(() => {
     if (phase !== "countdown") return;
-    if (countdown <= 0) { setPhase("playing"); reset(); return; }
+    if (countdown <= 0) {
+      setPhase("playing");
+      return;
+    }
     const id = setTimeout(() => setCountdown((c) => c - 1), 1000);
     return () => clearTimeout(id);
-  }, [phase, countdown, reset]);
+  }, [phase, countdown]);
 
   const finishGame = useCallback(() => {
     if (phase === "finished") return;
@@ -113,20 +199,35 @@ export default function AnimalClassificationPage() {
     if (p1Score > p2Score) setWinner("p1");
     else if (p2Score > p1Score) setWinner("p2");
     else setWinner("draw");
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, p1Score, p2Score]);
 
-  const handleClassify = (player: 1 | 2, cls: AnimalClass) => {
+  const handleClassify = (player: 1 | 2, guess: AnimalClass) => {
     if (phase !== "playing") return;
-    classify(player, cls);
+    classify(player, guess);
   };
 
   const handleRematch = () => {
-    setPhase("countdown"); setCountdown(3); setWinner(null); reset();
+    reset();
+    setWinner(null);
+    setPhase("countdown");
+    setCountdown(3);
   };
 
-  // Progress logic based on a max score, e.g., 200
-  const maxScore = 200;
+  const handleStartGame = ({
+    difficulty,
+    duration,
+  }: {
+    difficulty: "easy" | "medium" | "hard";
+    duration: number;
+  }) => {
+    setGameDuration(duration);
+    reset(difficulty);
+    setWinner(null);
+    setPhase("countdown");
+    setCountdown(3);
+  };
+
+  const maxScore = 120;
   const p1Pct = Math.min(Math.max(p1Score, 0) / maxScore, 1) * 100;
   const p2Pct = Math.min(Math.max(p2Score, 0) / maxScore, 1) * 100;
 
@@ -137,16 +238,28 @@ export default function AnimalClassificationPage() {
       <GameHeader
         title="Klasifikasi Hewan"
         subtitle="Animal Classification"
-        timerDuration={GAME_DURATION}
+        timerDuration={gameDuration}
         isTimerRunning={phase === "playing"}
         onTimerComplete={finishGame}
+        rightSlot={
+          <button
+            type="button"
+            onClick={() => setPhase("setup")}
+            aria-label="Pengaturan Permainan"
+            className="flex items-center justify-center rounded-xl border border-sky-200 bg-white/80 text-gray-700 font-bold shadow-sm hover:bg-white transition-colors"
+            style={{
+              minWidth: "clamp(40px, 5vw, 64px)",
+              minHeight: "clamp(40px, 5vw, 64px)",
+            }}
+          >
+            <SlidersHorizontal size={20} />
+          </button>
+        }
       />
 
       {/* SCOREBOARD */}
-      <div className="w-full z-10 flex-shrink-0" style={{ padding: "clamp(12px, 2vh, 24px) clamp(20px, 4vw, 60px) 0" }}>
-         <div className="w-full bg-white border-2 border-gray-200 shadow-lg rounded-2xl flex flex-col" style={{ padding: "clamp(12px, 1.5vh, 20px)", gap: "clamp(8px, 1vh, 14px)" }}>
-           
-            {/* Tim Biru (P1) */}
+      <div className="w-full z-10 flex-shrink-0" style={{ padding: "clamp(8px, 1.5vh, 18px) clamp(20px, 4vw, 60px) 0" }}>
+         <div className="w-full bg-white border-2 border-gray-200 shadow-lg rounded-2xl flex flex-col" style={{ padding: "clamp(10px, 1.2vh, 16px)", gap: "clamp(6px, 0.8vh, 12px)" }}>
             <div className="flex items-center gap-4 w-full">
                <div className="w-5 h-5 rounded-full flex-shrink-0" style={{ background: "#1e3a8a" }}></div>
                <div className="w-28 font-bold tracking-wider flex-shrink-0" style={{ fontSize: "clamp(13px, 1.3vw, 18px)", color: "#1e3a8a" }}>TIM BIRU</div>
@@ -155,8 +268,6 @@ export default function AnimalClassificationPage() {
                </div>
                <div className="font-bold text-center rounded-xl border-2 shadow-sm" style={{ padding: "clamp(4px, 0.6vh, 8px) clamp(10px, 1.2vw, 20px)", fontSize: "clamp(13px, 1.3vw, 18px)", color: "#1e3a8a", borderColor: "#1e3a8a", background: "#eff6ff" }}>{p1Score}</div>
             </div>
-
-            {/* Tim Merah (P2) */}
             <div className="flex items-center gap-4 w-full">
                <div className="w-5 h-5 rounded-full flex-shrink-0" style={{ background: "#7f1d1d" }}></div>
                <div className="w-28 font-bold tracking-wider flex-shrink-0" style={{ fontSize: "clamp(13px, 1.3vw, 18px)", color: "#7f1d1d" }}>TIM MERAH</div>
@@ -165,26 +276,28 @@ export default function AnimalClassificationPage() {
                </div>
                <div className="font-bold text-center rounded-xl border-2 shadow-sm" style={{ padding: "clamp(4px, 0.6vh, 8px) clamp(10px, 1.2vw, 20px)", fontSize: "clamp(13px, 1.3vw, 18px)", color: "#7f1d1d", borderColor: "#7f1d1d", background: "#fef2f2" }}>{p2Score}</div>
             </div>
-
          </div>
       </div>
 
       {/* CENTER ANIMAL DISPLAY */}
-      <div className="w-full z-10 flex-shrink-0" style={{ padding: "clamp(8px, 1.5vh, 18px) clamp(20px, 4vw, 60px)" }}>
+      <div className="w-full z-10 flex-shrink-0" style={{ padding: "clamp(8px, 1.2vh, 16px) clamp(20px, 4vw, 60px)" }}>
          <AnimatePresence mode="wait">
            {currentAnimal && (
              <motion.div 
                key={currentAnimal.id}
-               initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} transition={{ duration: 0.2 }}
-               className="bg-white rounded-2xl shadow-md border border-gray-200 text-center w-full flex flex-col items-center justify-center"
-               style={{ minHeight: "clamp(100px, 16vh, 200px)", padding: "clamp(12px, 1.8vh, 24px)" }}
+               initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.2 }}
+               className="bg-white rounded-2xl shadow-md border-2 border-sky-100 text-center w-full flex flex-col items-center justify-center"
+               style={{ minHeight: "clamp(90px, 13vh, 150px)", padding: "clamp(12px, 1.5vh, 20px)" }}
              >
-                <span style={{ fontSize: "clamp(48px, 8vw, 110px)", lineHeight: 1 }}>
-                  {currentAnimal.emoji}
-                </span>
-                <h2 className="font-black text-[#1f2937] mt-1" style={{ fontSize: "clamp(20px, 2.5vw, 40px)" }}>
+                <div className="p-3 bg-sky-50 text-sky-600 rounded-2xl mb-1 shadow-sm">
+                  <PawPrint size={36} />
+                </div>
+                <h2 className="font-black text-slate-800" style={{ fontSize: "clamp(22px, 2.8vw, 42px)", lineHeight: 1.1 }}>
                  {currentAnimal.name}
                </h2>
+               <p className="text-slate-400 font-bold text-xs sm:text-sm mt-1">
+                 Tentukan kelompok klasifikasi biologi hewan di atas
+               </p>
              </motion.div>
            )}
          </AnimatePresence>
@@ -239,6 +352,16 @@ export default function AnimalClassificationPage() {
       </AnimatePresence>
 
       <VictoryResultModal isOpen={phase === "finished"} winner={winner} p1Score={p1Score} p2Score={p2Score} p1Label="Tim Biru" p2Label="Tim Merah" onRematch={handleRematch} />
+
+      {/* PRE-GAME SETUP MODAL */}
+      <GameSetupModal
+        isOpen={phase === "setup"}
+        gameTitle="Klasifikasi Hewan"
+        gameSubtitle="Animal Classification"
+        defaultDifficulty="medium"
+        defaultDuration={60}
+        onStart={handleStartGame}
+      />
     </div>
   );
 }

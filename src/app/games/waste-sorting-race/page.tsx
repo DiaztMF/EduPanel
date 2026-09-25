@@ -4,12 +4,23 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { GameHeader } from "@/components/game/GameHeader";
 import { VictoryResultModal } from "@/components/game/VictoryResultModal";
+import { GameSetupModal } from "@/components/game/GameSetupModal";
 import { useWasteStore } from "@/store/useWasteStore";
 import { WASTE_CONFIG, type WasteCategory } from "@/data/waste-items";
+import { Leaf, Recycle, ShieldAlert, Trash2, SlidersHorizontal } from "lucide-react";
 
-const GAME_DURATION = 60; // seconds
+type Phase = "setup" | "countdown" | "playing" | "finished";
 
-type Phase = "countdown" | "playing" | "finished";
+function getWasteIcon(key: "leaf" | "recycle" | "shield", size = 28) {
+  switch (key) {
+    case "leaf":
+      return <Leaf size={size} />;
+    case "recycle":
+      return <Recycle size={size} />;
+    case "shield":
+      return <ShieldAlert size={size} />;
+  }
+}
 
 function TeamPanel({
   player,
@@ -32,13 +43,39 @@ function TeamPanel({
   const title = isP1 ? "TIM BIRU" : "TIM MERAH";
 
   return (
-    <div className="flex flex-col bg-white rounded-2xl shadow-lg border-2 overflow-hidden h-full" style={{ borderColor: color }}>
-      <div className="flex items-center justify-between text-white shadow-inner flex-shrink-0" style={{ backgroundColor: headerColor, padding: "clamp(12px, 1.5vh, 20px) clamp(20px, 3vw, 32px)" }}>
-        <h2 className="font-bold tracking-widest" style={{ fontSize: "clamp(14px, 1.6vw, 22px)" }}>{title}</h2>
-        <div className="font-black bg-white/20 rounded-lg" style={{ padding: "clamp(6px, 0.8vh, 10px) clamp(12px, 1.5vw, 20px)", fontSize: "clamp(13px, 1.3vw, 18px)" }}>{score} pts</div>
+    <div
+      className="flex flex-col bg-white rounded-2xl shadow-lg border-2 overflow-hidden h-full"
+      style={{ borderColor: color }}
+    >
+      <div
+        className="flex items-center justify-between text-white shadow-inner flex-shrink-0"
+        style={{
+          backgroundColor: headerColor,
+          padding: "clamp(12px, 1.5vh, 20px) clamp(20px, 3vw, 32px)",
+        }}
+      >
+        <h2 className="font-bold tracking-widest" style={{ fontSize: "clamp(14px, 1.6vw, 22px)" }}>
+          {title}
+        </h2>
+        <div
+          className="font-black bg-white/20 rounded-lg"
+          style={{
+            padding: "clamp(6px, 0.8vh, 10px) clamp(12px, 1.5vw, 20px)",
+            fontSize: "clamp(13px, 1.3vw, 18px)",
+          }}
+        >
+          {score} pts
+        </div>
       </div>
 
-      <div className="flex-1 flex flex-col min-h-0 relative" style={{ padding: "clamp(12px, 1.8vh, 22px)", background: "#f8fafc", gap: "clamp(10px, 1.4vh, 18px)" }}>
+      <div
+        className="flex-1 flex flex-col min-h-0 relative"
+        style={{
+          padding: "clamp(12px, 1.8vh, 22px)",
+          background: "#f8fafc",
+          gap: "clamp(10px, 1.4vh, 18px)",
+        }}
+      >
         <AnimatePresence>
           {lastResult && (
             <motion.div
@@ -46,7 +83,14 @@ function TeamPanel({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.5, y: -20 }}
               className="absolute font-black z-20 pointer-events-none"
-              style={{ top: "8%", left: "50%", transform: "translateX(-50%)", color: lastResult === "correct" ? "#10b981" : "#ef4444", fontSize: "clamp(40px, 5vw, 70px)", filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.1))" }}
+              style={{
+                top: "8%",
+                left: "50%",
+                transform: "translateX(-50%)",
+                color: lastResult === "correct" ? "#10b981" : "#ef4444",
+                fontSize: "clamp(40px, 5vw, 70px)",
+                filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.1))",
+              }}
             >
               {lastResult === "correct" ? "+10" : "-5"}
             </motion.div>
@@ -59,13 +103,27 @@ function TeamPanel({
             return (
               <button
                 key={`${cat}-${idx}`}
-                onPointerDown={(e) => { e.stopPropagation(); onGuess(cat); }}
+                type="button"
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                  onGuess(cat);
+                }}
                 disabled={disabled}
                 className="flex-1 w-full bg-white border-2 rounded-2xl shadow-sm flex items-center justify-center gap-4 active:scale-95 active:translate-y-0.5 transition-all"
-                style={{ borderColor: cfg.color, minHeight: "clamp(52px, 7vh, 90px)", opacity: disabled ? 0.6 : 1, touchAction: "manipulation" }}
+                style={{
+                  borderColor: cfg.color,
+                  minHeight: "clamp(56px, 7vh, 90px)",
+                  opacity: disabled ? 0.6 : 1,
+                  touchAction: "manipulation",
+                }}
               >
-                <span style={{ fontSize: "clamp(28px, 3vw, 44px)" }}>{cfg.emoji}</span>
-                <span className="font-bold" style={{ fontSize: "clamp(16px, 1.8vw, 28px)", color: cfg.color }}>{cfg.label}</span>
+                <div style={{ color: cfg.color }}>{getWasteIcon(cfg.iconKey, 30)}</div>
+                <span
+                  className="font-black"
+                  style={{ fontSize: "clamp(16px, 1.8vw, 28px)", color: cfg.color }}
+                >
+                  {cfg.label}
+                </span>
               </button>
             );
           })}
@@ -89,8 +147,9 @@ export default function WasteSortingRacePage() {
     reset,
   } = useWasteStore();
 
-  const [phase, setPhase] = useState<Phase>("countdown");
+  const [phase, setPhase] = useState<Phase>("setup");
   const [countdown, setCountdown] = useState(3);
+  const [gameDuration, setGameDuration] = useState(60);
   const [winner, setWinner] = useState<"p1" | "p2" | "draw" | null>(null);
 
   const [isMounted, setIsMounted] = useState(false);
@@ -99,31 +158,27 @@ export default function WasteSortingRacePage() {
     return () => clearTimeout(t);
   }, []);
 
-  const [locked, setLocked] = useState(false);
-
+  // Countdown
   useEffect(() => {
     if (phase !== "countdown") return;
     if (countdown <= 0) {
-      const t = setTimeout(() => {
-        setPhase("playing");
-        reset();
-      }, 0);
-      return () => clearTimeout(t);
+      setPhase("playing");
+      return;
     }
     const id = setTimeout(() => setCountdown((c) => c - 1), 1000);
     return () => clearTimeout(id);
-  }, [phase, countdown, reset]);
+  }, [phase, countdown]);
+
+  const [locked, setLocked] = useState(false);
 
   const handleGuess = (player: 1 | 2, cat: WasteCategory) => {
     if (phase !== "playing" || locked) return;
-    setLocked(true);
     submitAnswer(player, cat);
-    
-    // Auto advance immediately after someone answers
+    setLocked(true);
     setTimeout(() => {
       nextWaste();
       setLocked(false);
-    }, 800);
+    }, 600);
   };
 
   const finishGame = () => {
@@ -135,14 +190,25 @@ export default function WasteSortingRacePage() {
   };
 
   const handleRematch = () => {
+    reset();
+    setWinner(null);
     setPhase("countdown");
     setCountdown(3);
-    setWinner(null);
-    reset();
   };
 
-  // SCORE PCT
-  const maxScore = Math.max(100, p1Score, p2Score);
+  const handleStartGame = ({
+    difficulty,
+    duration,
+  }: {
+    difficulty: "easy" | "medium" | "hard";
+    duration: number;
+  }) => {
+    setGameDuration(duration);
+    reset(difficulty);
+    setWinner(null);
+    setPhase("countdown");
+    setCountdown(3);
+  };
 
   if (!isMounted) return <div className="w-full h-full bg-[#e0f2fe]" />;
 
@@ -153,9 +219,23 @@ export default function WasteSortingRacePage() {
       <GameHeader
         title="Balapan Pilah Sampah"
         subtitle="Waste Sorting Race"
-        timerDuration={GAME_DURATION}
+        timerDuration={gameDuration}
         isTimerRunning={phase === "playing"}
         onTimerComplete={finishGame}
+        rightSlot={
+          <button
+            type="button"
+            onClick={() => setPhase("setup")}
+            aria-label="Pengaturan Permainan"
+            className="flex items-center justify-center rounded-xl border border-sky-200 bg-white/80 text-gray-700 font-bold shadow-sm hover:bg-white transition-colors"
+            style={{
+              minWidth: "clamp(40px, 5vw, 64px)",
+              minHeight: "clamp(40px, 5vw, 64px)",
+            }}
+          >
+            <SlidersHorizontal size={20} />
+          </button>
+        }
       />
 
       {/* CENTER CLUE CARD */}
@@ -163,14 +243,22 @@ export default function WasteSortingRacePage() {
          <AnimatePresence mode="wait">
            <motion.div 
              key={currentWaste.id}
-             initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }}
-             className="bg-white rounded-2xl shadow-md border border-gray-200 text-center w-full flex flex-col items-center justify-center"
-             style={{ minHeight: "clamp(100px, 15vh, 190px)", padding: "clamp(12px, 1.8vh, 24px)" }}
+             initial={{ opacity: 0, scale: 0.95 }}
+             animate={{ opacity: 1, scale: 1 }}
+             exit={{ opacity: 0, scale: 0.95 }}
+             transition={{ duration: 0.2 }}
+             className="bg-white rounded-2xl shadow-md border-2 border-sky-100 text-center w-full flex flex-col items-center justify-center"
+             style={{ minHeight: "clamp(90px, 14vh, 160px)", padding: "clamp(12px, 1.8vh, 24px)" }}
            >
-             <span style={{ fontSize: "clamp(48px, 6vw, 84px)", lineHeight: 1 }}>{currentWaste.emoji}</span>
-             <h2 className="font-black text-[#1f2937] mt-1 leading-tight" style={{ fontSize: "clamp(22px, 2.5vw, 38px)" }}>
+             <div className="p-2.5 bg-sky-50 text-sky-600 rounded-xl mb-1 shadow-sm">
+               <Trash2 size={34} />
+             </div>
+             <h2 className="font-black text-slate-800 leading-tight" style={{ fontSize: "clamp(22px, 2.5vw, 40px)" }}>
                {currentWaste.name}
              </h2>
+             <p className="text-slate-400 font-semibold text-xs sm:text-sm mt-1">
+               {currentWaste.hint}
+             </p>
            </motion.div>
          </AnimatePresence>
       </div>
@@ -205,13 +293,17 @@ export default function WasteSortingRacePage() {
           <motion.div
             className="absolute inset-0 z-40 flex flex-col items-center justify-center"
             style={{ background: "rgba(224,242,254,0.95)", backdropFilter: "blur(12px)" }}
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
           >
             <p className="text-gray-600 font-bold mb-6" style={{ fontSize: "clamp(32px, 3vw, 56px)" }}>Bersiap...</p>
             <AnimatePresence mode="wait">
               <motion.div
                 key={countdown}
-                initial={{ scale: 2, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }}
+                initial={{ scale: 2, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.5, opacity: 0 }}
                 transition={{ duration: 0.35 }}
                 className="font-black text-[#0284c7]"
                 style={{ fontSize: "clamp(160px, 20vw, 320px)", lineHeight: 1 }}
@@ -224,6 +316,16 @@ export default function WasteSortingRacePage() {
       </AnimatePresence>
 
       <VictoryResultModal isOpen={phase === "finished"} winner={winner} p1Score={p1Score} p2Score={p2Score} p1Label="Tim Biru" p2Label="Tim Merah" onRematch={handleRematch} />
+
+      {/* PRE-GAME SETUP MODAL */}
+      <GameSetupModal
+        isOpen={phase === "setup"}
+        gameTitle="Balapan Pilah Sampah"
+        gameSubtitle="Waste Sorting Race"
+        defaultDifficulty="medium"
+        defaultDuration={60}
+        onStart={handleStartGame}
+      />
     </div>
   );
 }

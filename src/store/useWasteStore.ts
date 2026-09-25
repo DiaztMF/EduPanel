@@ -3,6 +3,7 @@ import { devtools } from "zustand/middleware";
 import { type WasteItem, type WasteCategory, getRandomWaste } from "@/data/waste-items";
 
 interface WasteSortingState {
+  difficulty: "easy" | "medium" | "hard";
   currentWaste: WasteItem;
   p1Options: WasteCategory[];
   p2Options: WasteCategory[];
@@ -13,7 +14,7 @@ interface WasteSortingState {
 
   submitAnswer: (player: 1 | 2, guess: WasteCategory) => boolean;
   nextWaste: () => void;
-  reset: () => void;
+  reset: (difficulty?: "easy" | "medium" | "hard") => void;
 }
 
 const ALL_CATEGORIES: WasteCategory[] = ["organik", "anorganik", "b3"];
@@ -27,8 +28,9 @@ function generateOptions(correctCategory: WasteCategory): WasteCategory[] {
 export const useWasteStore = create<WasteSortingState>()(
   devtools(
     (set, get) => {
-      const initialWaste = getRandomWaste();
+      const initialWaste = getRandomWaste("medium");
       return {
+        difficulty: "medium",
         currentWaste: initialWaste,
         p1Options: generateOptions(initialWaste.category),
         p2Options: generateOptions(initialWaste.category),
@@ -51,7 +53,8 @@ export const useWasteStore = create<WasteSortingState>()(
         },
 
         nextWaste: () => {
-          const newWaste = getRandomWaste();
+          const { difficulty } = get();
+          const newWaste = getRandomWaste(difficulty);
           set({
             currentWaste: newWaste,
             p1Options: generateOptions(newWaste.category),
@@ -61,9 +64,11 @@ export const useWasteStore = create<WasteSortingState>()(
           });
         },
 
-        reset: () => {
-          const w = getRandomWaste();
+        reset: (newDifficulty) => {
+          const diff = newDifficulty || get().difficulty;
+          const w = getRandomWaste(diff);
           set({
+            difficulty: diff,
             currentWaste: w,
             p1Options: generateOptions(w.category),
             p2Options: generateOptions(w.category),

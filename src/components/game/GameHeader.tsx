@@ -7,7 +7,7 @@ import { GlobalTimer } from "./GlobalTimer";
 interface GameHeaderProps {
   title: string;
   subtitle?: string;
-  timerDuration?: number;       // optional — omit for timer-less games
+  timerDuration?: number;       // optional - omit for timer-less games
   isTimerRunning?: boolean;
   onTimerComplete?: () => void;
   /** Optional left-side element. Defaults to back button. */

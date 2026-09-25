@@ -45,7 +45,7 @@ export function useAudio() {
         oscillator.start(ctx.currentTime);
         oscillator.stop(ctx.currentTime + cfg.duration);
       } catch {
-        // AudioContext may be blocked until user interaction — silent fail
+        // AudioContext may be blocked until user interaction - silent fail
       }
     },
     [isMuted, getCtx]

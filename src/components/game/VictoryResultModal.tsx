@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { RotateCcw, Home } from "lucide-react";
+import { RotateCcw, Home, Trophy, Handshake } from "lucide-react";
 
 interface VictoryResultModalProps {
   isOpen: boolean;
@@ -80,14 +80,18 @@ export function VictoryResultModal({
             exit={{ scale: 0.7, opacity: 0, y: 40 }}
             transition={{ type: "spring", bounce: 0.4, delay: 0.1 }}
           >
-            {/* Trophy */}
+            {/* Trophy or Draw icon */}
             <motion.div
               initial={{ scale: 0, rotate: -180 }}
               animate={{ scale: 1, rotate: 0 }}
               transition={{ type: "spring", bounce: 0.6, delay: 0.3 }}
-              style={{ fontSize: "clamp(48px, 8vw, 96px)" }}
+              className="flex items-center justify-center p-2"
             >
-              {winner === "draw" ? "🤝" : "🏆"}
+              {winner === "draw" ? (
+                <Handshake size={72} className="text-amber-500 drop-shadow-md" />
+              ) : (
+                <Trophy size={80} className="text-yellow-500 drop-shadow-md" />
+              )}
             </motion.div>
 
             {/* Heading */}

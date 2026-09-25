@@ -20,7 +20,7 @@ export function GlobalTimer({
 }: GlobalTimerProps) {
   const [remaining, setRemaining] = useState(duration);
 
-  // Stable callback refs — never cause the interval to restart
+  // Stable callback refs - never cause the interval to restart
   const onCompleteRef = useRef(onComplete);
   const onCriticalRef = useRef(onCritical);
   useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);

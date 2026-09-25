@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { Construction } from "lucide-react";
 
 export default function GameComingSoon() {
   return (
@@ -10,9 +11,9 @@ export default function GameComingSoon() {
         initial={{ scale: 0.5, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring", bounce: 0.4 }}
-        style={{ fontSize: "clamp(60px, 10vw, 120px)" }}
+        className="flex items-center justify-center text-amber-400"
       >
-        🚧
+        <Construction size={80} />
       </motion.div>
       <motion.div
         initial={{ opacity: 0, y: 20 }}

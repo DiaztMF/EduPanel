@@ -21,7 +21,7 @@ export interface GameConfig {
 interface GameCardProps {
   game: GameConfig;
   index: number;
-  /** Category accent color passed from the section — e.g. #ffaa5e */
+  /** Category accent color passed from the section - e.g. #ffaa5e */
   accentColor?: string;
   accentBg?: string;
 }

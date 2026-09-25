@@ -2,14 +2,14 @@
 
 /* ─── CSS Custom Properties ─── */
 :root {
-  /* Color Palette — Light Theme (design.md) */
+  /* Color Palette - Light Theme (design.md) */
   --color-bg: #e0f2fe;
   --color-bg-card: #ffffff;
   --color-bg-card-hover: #f8fafc;
   --color-border: #e2e8f0;
   --color-border-hover: #cbd5e1;
 
-  /* Player Colors — design.md §2 */
+  /* Player Colors - design.md §2 */
   --color-p1: #1e3a8a;
   --color-p1-dim: rgba(30, 58, 138, 0.12);
   --color-p1-glow: rgba(30, 58, 138, 0.25);
@@ -24,7 +24,7 @@
   --color-accent-mint: #4adeab;
   --color-accent-orange: #ffaa5e;
 
-  /* Fluid Typography — readable from back of classroom */
+  /* Fluid Typography - readable from back of classroom */
   --text-xs: clamp(0.875rem, 1.2vw, 1rem);
   --text-sm: clamp(1rem, 1.5vw, 1.25rem);
   --text-base: clamp(1.125rem, 1.8vw, 1.5rem);

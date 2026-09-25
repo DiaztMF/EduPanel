@@ -249,13 +249,12 @@ export default function DashboardPage() {
             style={{ width: "1.5px", marginBlock: "4px" }}
           />
 
-          {/* SMP Negeri 14 Surakarta */}
+          {/* SMK Negeri 2 Surakarta */}
           <div className="flex items-center gap-3">
             <img
-              src="/smpn14_nobg.webp"
-              alt="Logo SMP Negeri 14 Surakarta"
+              src="/smkn2_nobg.webp"
+              alt="Logo SMK Negeri 2 Surakarta"
               style={{
-                mixBlendMode: "multiply",
                 height: "clamp(36px, 5vh, 56px)",
                 width: "auto",
                 objectFit: "contain",
@@ -266,7 +265,7 @@ export default function DashboardPage() {
                 className="font-bold text-gray-700 leading-tight"
                 style={{ fontSize: "clamp(0.56rem, 0.78vw, 0.74rem)" }}
               >
-                SMP Negeri 14
+                SMK Negeri 2
               </span>
               <span
                 className="font-bold text-gray-700 leading-tight"

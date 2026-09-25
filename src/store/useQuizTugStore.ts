@@ -2,7 +2,10 @@ import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { type TriviaQuestion, getNextTrivia, resetTriviaPool } from "@/data/quiz-trivia";
 
+export type TriviaDifficulty = TriviaQuestion["difficulty"];
+
 interface QuizTugState {
+  difficulty: TriviaDifficulty;
   ropePosition: number;
   currentQuestion: TriviaQuestion;
   lastAnswerResult: { player: 1 | 2; correct: boolean } | null;
@@ -11,16 +14,18 @@ interface QuizTugState {
 
   submitAnswer: (player: 1 | 2, selected: string) => boolean;
   nextQuestion: () => void;
-  reset: () => void;
+  reset: (difficulty?: TriviaDifficulty) => void;
 }
 
 const ROPE_SHIFT = 10;
+const defaultDifficulty: TriviaDifficulty = "medium";
 
 export const useQuizTugStore = create<QuizTugState>()(
   devtools(
     (set, get) => ({
+      difficulty: defaultDifficulty,
       ropePosition: 0,
-      currentQuestion: getNextTrivia(),
+      currentQuestion: getNextTrivia(defaultDifficulty),
       lastAnswerResult: null,
       p1Answered: false,
       p2Answered: false,
@@ -43,12 +48,27 @@ export const useQuizTugStore = create<QuizTugState>()(
         return correct;
       },
 
-      nextQuestion: () =>
-        set({ currentQuestion: getNextTrivia(), lastAnswerResult: null, p1Answered: false, p2Answered: false }),
+      nextQuestion: () => {
+        const { difficulty } = get();
+        set({
+          currentQuestion: getNextTrivia(difficulty),
+          lastAnswerResult: null,
+          p1Answered: false,
+          p2Answered: false,
+        });
+      },
 
-      reset: () => {
-        resetTriviaPool();
-        set({ ropePosition: 0, currentQuestion: getNextTrivia(), lastAnswerResult: null, p1Answered: false, p2Answered: false });
+      reset: (newDifficulty) => {
+        const diff = newDifficulty || get().difficulty;
+        resetTriviaPool(diff);
+        set({
+          difficulty: diff,
+          ropePosition: 0,
+          currentQuestion: getNextTrivia(diff),
+          lastAnswerResult: null,
+          p1Answered: false,
+          p2Answered: false,
+        });
       },
     }),
     { name: "QuizTug-Store" }

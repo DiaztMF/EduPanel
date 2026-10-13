@@ -110,13 +110,7 @@ body {
 
 /* ─── Touch Button Base ─── */
 .touch-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   cursor: pointer;
-  border: none;
-  outline: none;
-  border-radius: 12px;
   font-family: inherit;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles,
@@ -102,14 +102,28 @@ export function GameSetupModal({
   defaultDuration = 60,
   onStart,
 }: GameSetupModalProps) {
-  const [selectedDifficulty, setSelectedDifficulty] = useState<GameDifficulty>(defaultDifficulty);
-  const [selectedDuration, setSelectedDuration] = useState<number>(defaultDuration);
+  const resolvedDifficulty = availableDifficulties.includes(defaultDifficulty)
+    ? defaultDifficulty
+    : availableDifficulties[0] ?? defaultDifficulty;
+  const resolvedDuration = availableDurations.includes(defaultDuration)
+    ? defaultDuration
+    : availableDurations[0] ?? defaultDuration;
 
-  if (!isOpen) return null;
+  const [selectedDifficulty, setSelectedDifficulty] = useState<GameDifficulty>(resolvedDifficulty);
+  const [selectedDuration, setSelectedDuration] = useState<number>(resolvedDuration);
+
+  useEffect(() => {
+    setSelectedDifficulty(resolvedDifficulty);
+  }, [resolvedDifficulty]);
+
+  useEffect(() => {
+    setSelectedDuration(resolvedDuration);
+  }, [resolvedDuration]);
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {isOpen && (
+      <div key="game-setup-modal" className="fixed inset-0 z-50 flex items-center justify-center p-4">
         {/* Backdrop */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -295,6 +309,7 @@ export function GameSetupModal({
           </div>
         </motion.div>
       </div>
+      )}
     </AnimatePresence>
   );
 }

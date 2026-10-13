@@ -7,7 +7,7 @@ export type TriviaDifficulty = TriviaQuestion["difficulty"];
 interface QuizTugState {
   difficulty: TriviaDifficulty;
   ropePosition: number;
-  currentQuestion: TriviaQuestion;
+  currentQuestion: TriviaQuestion | null;
   lastAnswerResult: { player: 1 | 2; correct: boolean } | null;
   p1Answered: boolean;
   p2Answered: boolean;
@@ -25,13 +25,16 @@ export const useQuizTugStore = create<QuizTugState>()(
     (set, get) => ({
       difficulty: defaultDifficulty,
       ropePosition: 0,
-      currentQuestion: getNextTrivia(defaultDifficulty),
+      // Deterministic initial value so server and client render match; a random
+      // question is picked after mount (see page useEffect) or on game start.
+      currentQuestion: null,
       lastAnswerResult: null,
       p1Answered: false,
       p2Answered: false,
 
       submitAnswer: (player, selected) => {
         const { currentQuestion, ropePosition, p1Answered, p2Answered } = get();
+        if (!currentQuestion) return false;
         if (player === 1 && p1Answered) return false;
         if (player === 2 && p2Answered) return false;
 

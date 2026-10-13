@@ -165,6 +165,13 @@ export default function QuizTugOfWarPage() {
     return () => clearTimeout(id);
   }, [phase, countdown]);
 
+  // SSR renders a null question; pick a random one only after mount to keep
+  // server and client markup identical (avoids hydration mismatch).
+  useEffect(() => {
+    nextQuestion();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Check win by rope threshold
   useEffect(() => {
     if (phase !== "playing") return;
@@ -271,16 +278,18 @@ export default function QuizTugOfWarPage() {
       {/* ── QUESTION PANEL (center, compact) ── */}
       <div className="w-full flex justify-center px-6 z-10" style={{ paddingTop: "clamp(10px, 1.5vh, 20px)", paddingBottom: "clamp(6px, 1vh, 12px)" }}>
         <AnimatePresence mode="wait">
-          <motion.div
-            key={currentQuestion.id}
-            initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 16 }} transition={{ duration: 0.2 }}
-            className="bg-white rounded-2xl shadow-md border-2 border-sky-100 text-center flex items-center justify-center"
-            style={{ padding: "clamp(12px, 1.8vh, 28px) clamp(24px, 3vw, 60px)", maxWidth: "clamp(500px, 55vw, 1100px)", minHeight: "clamp(60px, 8vh, 120px)", width: "100%" }}
-          >
-            <h2 className="font-black text-[#1e1b4b] leading-tight" style={{ fontSize: "clamp(18px, 2vw, 36px)" }}>
-              {currentQuestion.question}
-            </h2>
-          </motion.div>
+          {currentQuestion && (
+            <motion.div
+              key={currentQuestion.id}
+              initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 16 }} transition={{ duration: 0.2 }}
+              className="bg-white rounded-2xl shadow-md border-2 border-sky-100 text-center flex items-center justify-center"
+              style={{ padding: "clamp(12px, 1.8vh, 28px) clamp(24px, 3vw, 60px)", maxWidth: "clamp(500px, 55vw, 1100px)", minHeight: "clamp(60px, 8vh, 120px)", width: "100%" }}
+            >
+              <h2 className="font-black text-[#1e1b4b] leading-tight" style={{ fontSize: "clamp(18px, 2vw, 36px)" }}>
+                {currentQuestion.question}
+              </h2>
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
 
@@ -291,7 +300,7 @@ export default function QuizTugOfWarPage() {
         <div className="flex flex-col items-start z-10 flex-shrink-0">
           <QuizPanel
             player={1}
-            options={currentQuestion.options}
+            options={currentQuestion?.options ?? []}
             disabled={!isPlaying}
             onSelect={(val) => handleAnswer(1, val)}
             feedback={p1Feedback}
@@ -308,7 +317,7 @@ export default function QuizTugOfWarPage() {
         <div className="flex flex-col items-end z-10 flex-shrink-0">
           <QuizPanel
             player={2}
-            options={currentQuestion.options}
+            options={currentQuestion?.options ?? []}
             disabled={!isPlaying}
             onSelect={(val) => handleAnswer(2, val)}
             feedback={p2Feedback}

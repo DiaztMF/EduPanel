@@ -25,14 +25,15 @@
   --color-accent-orange: #ffaa5e;
 
   /* Fluid Typography - readable from back of classroom */
-  --text-xs: clamp(0.875rem, 1.2vw, 1rem);
-  --text-sm: clamp(1rem, 1.5vw, 1.25rem);
-  --text-base: clamp(1.125rem, 1.8vw, 1.5rem);
-  --text-lg: clamp(1.25rem, 2.2vw, 2rem);
-  --text-xl: clamp(1.5rem, 3vw, 2.5rem);
-  --text-2xl: clamp(2rem, 4vw, 3.5rem);
-  --text-3xl: clamp(2.5rem, 5.5vw, 5rem);
-  --text-game-score: clamp(3rem, 7vw, 7rem);
+  /* Fluid Typography Variables (custom prefix to avoid hijacking Tailwind v4 text-* utilities) */
+  --fluid-text-xs: clamp(0.875rem, 1.2vw, 1rem);
+  --fluid-text-sm: clamp(1rem, 1.5vw, 1.25rem);
+  --fluid-text-base: clamp(1.125rem, 1.8vw, 1.5rem);
+  --fluid-text-lg: clamp(1.25rem, 2.2vw, 2rem);
+  --fluid-text-xl: clamp(1.5rem, 3vw, 2.5rem);
+  --fluid-text-2xl: clamp(2rem, 4vw, 3.5rem);
+  --fluid-text-3xl: clamp(2.5rem, 5.5vw, 5rem);
+  --fluid-text-game-score: clamp(3rem, 7vw, 7rem);
 
   /* Touch Targets */
   --touch-sm: 48px;
@@ -42,12 +43,12 @@
 }
 
 /* ─── Global Reset & Base ─── */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
 }
 
 html {
@@ -140,14 +141,14 @@ body {
 }
 
 /* ─── Typography Utilities ─── */
-.text-fluid-xs { font-size: var(--text-xs); }
-.text-fluid-sm { font-size: var(--text-sm); }
-.text-fluid-base { font-size: var(--text-base); }
-.text-fluid-lg { font-size: var(--text-lg); }
-.text-fluid-xl { font-size: var(--text-xl); }
-.text-fluid-2xl { font-size: var(--text-2xl); }
-.text-fluid-3xl { font-size: var(--text-3xl); }
-.text-game-score { font-size: var(--text-game-score); }
+.text-fluid-xs { font-size: var(--fluid-text-xs); }
+.text-fluid-sm { font-size: var(--fluid-text-sm); }
+.text-fluid-base { font-size: var(--fluid-text-base); }
+.text-fluid-lg { font-size: var(--fluid-text-lg); }
+.text-fluid-xl { font-size: var(--fluid-text-xl); }
+.text-fluid-2xl { font-size: var(--fluid-text-2xl); }
+.text-fluid-3xl { font-size: var(--fluid-text-3xl); }
+.text-game-score { font-size: var(--fluid-text-game-score); }
 
 /* ─── Category Badge Colors ─── */
 .badge-cat-a { background: rgba(255, 170, 94, 0.15); color: #ffaa5e; border: 1px solid rgba(255, 170, 94, 0.3); }
